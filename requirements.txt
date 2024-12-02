@@ -2,3 +2,6 @@ opencv-python
 numpy
 kagglehub
 scikit-learn
+torch
+torchvision
+matplotlib
