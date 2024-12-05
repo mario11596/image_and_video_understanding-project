@@ -1,8 +1,6 @@
 import os
 import numpy as np
-import json
 from PIL import Image
-import cv2
 import mediapipe as mp
 from mediapipe.tasks.python import BaseOptions
 from mediapipe.tasks.python.vision import HandLandmarker, HandLandmarkerOptions
@@ -19,8 +17,8 @@ def read_images_from_folders(base_folder):
 
 def process_hand_landmarker_result(output, label):
     # Extract left and right hand landmarks as flattened arrays
-    left_hand_landmarks = []
-    right_hand_landmarks = []
+    left_hand_landmarks = [0.0] * 63
+    right_hand_landmarks = [0.0] * 63
 
     for i, handedness in enumerate(output.handedness):
         hand_landmarks = output.hand_landmarks[i]
@@ -44,45 +42,47 @@ def process_hand_landmarker_result(output, label):
     }
 
 
-def read_image_and_process(image_path, folder_label, landmarker):
-    pil_image = Image.open(image_path)
-    numpy_image = np.array(pil_image)
-    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
-
-    result = landmarker.detect(mp_image)
-
-    if result.hand_landmarks:
-        print("Result.hand_landmarks:")
-        print(result.hand_landmarks)
-        return process_hand_landmarker_result(result, folder_label)
-    else:
-        return None
-
-
 if __name__ == '__main__':
     #TODO: put correct folder for dataset!
-    base_folder = '/Users/laurapessl/Desktop/Universität/WS2024/Image & Video Understanding/image_and_video_understanding-project/custom_dataset'
+    base_folder = '../dataset/'
     model_path = 'hand_landmarker.task'
+    splits = ["train", "validation", "train"]
 
     mp_hands = mp.solutions.hands
-
     base_options = BaseOptions(model_asset_path=model_path)
 
     options = HandLandmarkerOptions(
         base_options=base_options,
         running_mode=vision.RunningMode.IMAGE)
 
-    for image_path, folder_label in read_images_from_folders(base_folder):
-        pil_image = Image.open(image_path)
-        numpy_image = np.array(pil_image)
+    with HandLandmarker.create_from_options(options) as landmarker:
+        for split in splits:
+            print(f"Processing {split} split...")
+            split_path = os.path.join(base_folder, split)
+            label_to_idx = {label: idx for idx, label in enumerate(sorted(os.listdir(split_path)))}
 
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
+            features = []
+            labels = []
 
-        with HandLandmarker.create_from_options(options) as landmarker:
-            result = landmarker.detect(mp_image)
-            #TODO: define where images should be saved
-            output_filename = f"{os.path.splitext(os.path.basename(image_path))[0]}.npy"
-            processed_data = process_hand_landmarker_result(result, folder_label)
-            np.save(output_filename, processed_data)
-            print(f"Saved data to {output_filename}")
+            for image_path, folder_label in read_images_from_folders(split_path):
+                pil_image = Image.open(image_path)
+                numpy_image = np.array(pil_image)
 
+                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
+
+                result = landmarker.detect(mp_image)
+                #TODO: define where images should be saved
+                #output_filename = f"{os.path.splitext(os.path.basename(image_path))[0]}.npy"
+                processed_data = process_hand_landmarker_result(result, folder_label)
+                combined_landmarks = np.concatenate(
+                    (processed_data["landmarkers_leftHand"], processed_data["landmarkers_rightHand"])
+                )
+                features.append(combined_landmarks)
+                labels.append(label_to_idx[processed_data["label"]])
+
+            features = np.array(features, dtype=np.float32)
+            labels = np.array(labels, dtype=np.int32)
+
+            np.save(f"{split}_data.npy", features)
+            np.save(f"{split}_labels.npy", labels)
+            #print(f"Saved data to {output_filename}")
