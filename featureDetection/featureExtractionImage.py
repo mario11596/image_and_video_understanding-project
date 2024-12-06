@@ -46,7 +46,7 @@ if __name__ == '__main__':
     #TODO: put correct folder for dataset!
     base_folder = '../dataset/'
     model_path = 'hand_landmarker.task'
-    splits = ["train", "validation", "train"]
+    splits = ["train", "validation", "test"]
 
     mp_hands = mp.solutions.hands
     base_options = BaseOptions(model_asset_path=model_path)
@@ -71,8 +71,7 @@ if __name__ == '__main__':
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
 
                 result = landmarker.detect(mp_image)
-                #TODO: define where images should be saved
-                #output_filename = f"{os.path.splitext(os.path.basename(image_path))[0]}.npy"
+
                 processed_data = process_hand_landmarker_result(result, folder_label)
                 combined_landmarks = np.concatenate(
                     (processed_data["landmarkers_leftHand"], processed_data["landmarkers_rightHand"])
@@ -85,4 +84,3 @@ if __name__ == '__main__':
 
             np.save(f"{split}_data.npy", features)
             np.save(f"{split}_labels.npy", labels)
-            #print(f"Saved data to {output_filename}")
