@@ -15,6 +15,7 @@ pip install -r requirements.txt
 Run the script dataset_preparing.py. It will download the dataset from Kaggle page and combine images from that dataset and custom dataset into one folder. After that step, it will be run the script to generate validation/training/testing dataset
 
 ## MediaPipe
+Run the script featureExtractionImage.py in folder featureDetection to create hand landmarks for datasets
 
 ## CNN Model
 
