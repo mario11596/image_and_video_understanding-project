@@ -12,4 +12,13 @@ pip install -r requirements.txt
 ```
 
 ## Dataset
-Run the script dataset_preparing.py. It will download the dataset from Kaggle page and combine images from that dataset and custom dataset into one folder. After that step, it will generate training and validation dataset.
+Run the script dataset_preparing.py. It will download the dataset from Kaggle page and combine images from that dataset and custom dataset into one folder. After that step, it will be run the script to generate validation/training/testing dataset
+
+## MediaPipe
+
+## CNN Model
+
+## RNN Model
+To run RNN model, you have to run the script rnn_model.py. It will automatically load training and validation dataset using .npy files. After the training is done, "training_validation_mode" variable in line 15 has to be changed into False, and that is possible to do the testing. The accuracy will be 74.68% 
+
+
