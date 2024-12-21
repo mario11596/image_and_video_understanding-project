@@ -28,7 +28,6 @@ def draw_landmarks_on_image(rgb_image, detection_result):
             mp.solutions.drawing_styles.get_default_hand_connections_style()
         )
 
-
     return annotated_image
 
 def main():
@@ -51,17 +50,18 @@ def main():
 
             if results.multi_hand_landmarks:
                 annotated_image = draw_landmarks_on_image(frame_rgb, results)
+                frame_to_show = cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
+            else:
+                frame_to_show = frame
 
-                annotated_image_bgr = cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
-
-                cv2.imshow("Webcam Feed with Hand Landmarks", annotated_image_bgr)
+            # !! Fixed: also show webcam when no hands are visible
+            cv2.imshow("Webcam Feed with Hand Landmarks", frame_to_show)
 
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
     cap.release()
     cv2.destroyAllWindows()
-
 
 if __name__ == '__main__':
     main()
