@@ -59,12 +59,13 @@ if __name__ == '__main__':
         for split in splits:
             print(f"Processing {split} split...")
             split_path = os.path.join(base_folder, split)
-            label_to_idx = {label: idx for idx, label in enumerate(sorted(os.listdir(split_path)))}
+            label_to_idx = {label: idx for idx, label in enumerate(os.listdir(split_path))}
 
             features = []
             labels = []
 
             for image_path, folder_label in read_images_from_folders(split_path):
+                print(folder_label)
                 pil_image = Image.open(image_path)
                 numpy_image = np.array(pil_image)
 
@@ -78,6 +79,7 @@ if __name__ == '__main__':
                 )
                 features.append(combined_landmarks)
                 labels.append(label_to_idx[processed_data["label"]])
+
 
             features = np.array(features, dtype=np.float32)
             labels = np.array(labels, dtype=np.int32)

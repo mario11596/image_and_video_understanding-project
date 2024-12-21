@@ -30,38 +30,51 @@ def draw_landmarks_on_image(rgb_image, detection_result):
 
     return annotated_image
 
-def main():
-    cap = cv2.VideoCapture(0)
+def process_hand_landmarker_result(output):
+    # Extract left and right hand landmarks as flattened arrays
+    left_hand_landmarks = [0.0] * 63
+    right_hand_landmarks = [0.0] * 63
 
-    if not cap.isOpened():
-        print("Error: Could not open webcam.")
-        return
+    for i, handedness in enumerate(output.multi_handedness):
+        hand_landmarks = output.multi_hand_landmarks[i]
+        flattened_landmarks = [
+                                  landmark.x for landmark in hand_landmarks.landmark
+                              ] + [
+                                  landmark.y for landmark in hand_landmarks.landmark
+                              ] + [
+                                  landmark.z for landmark in hand_landmarks.landmark
+                              ]
 
+        print(flattened_landmarks)
+        if handedness.classification[0].label == "Left":
+            left_hand_landmarks = flattened_landmarks
+        elif handedness.classification[0].label == "Right":
+            right_hand_landmarks = flattened_landmarks
+
+    return {
+        "landmarkers_leftHand": np.array(left_hand_landmarks, dtype=np.float32),
+        "landmarkers_rightHand": np.array(right_hand_landmarks, dtype=np.float32)
+    }
+
+def process_video_frame(frame):
     with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5) as hands:
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                print("Error: Failed to grab frame.")
-                break
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = hands.process(frame_rgb)
+        features = []
 
-            results = hands.process(frame_rgb)
+        if results.multi_hand_landmarks:
+            annotated_image = draw_landmarks_on_image(frame_rgb, results)
 
-            if results.multi_hand_landmarks:
-                annotated_image = draw_landmarks_on_image(frame_rgb, results)
-                frame_to_show = cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
-            else:
-                frame_to_show = frame
+            processed_data = process_hand_landmarker_result(results)
+            combined_landmarks = np.concatenate(
+                (processed_data["landmarkers_leftHand"], processed_data["landmarkers_rightHand"])
+            )
+            features = combined_landmarks
+            features = np.array(features, dtype=np.float32)
 
-            # !! Fixed: also show webcam when no hands are visible
-            cv2.imshow("Webcam Feed with Hand Landmarks", frame_to_show)
-
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-if __name__ == '__main__':
-    main()
+            print('gore sam')
+            return cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR), features
+        else:
+            print('dole sam')
+            return frame, features
