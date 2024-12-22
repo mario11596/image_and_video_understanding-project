@@ -4,6 +4,9 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 import random
+from sklearn.metrics import confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 num_classes = 35
@@ -155,52 +158,6 @@ def evaluate_model(model, dataloader, criterion, device):
     accuracy = correct / len(dataloader.dataset)
     return total_loss / len(dataloader), accuracy
 
-def main(train_features, train_labels, val_features, val_labels, test_features, test_labels, 
-         num_classes, input_shape=(9,14), batch_size=32, epochs=30, learning_rate=0.0015, step_size=3, gamma=0.15):
-    # Create datasets and data loaders
-    train_dataset = HandSignDataset(train_features, train_labels, input_shape)
-    val_dataset = HandSignDataset(val_features, val_labels, input_shape)
-    test_dataset = HandSignDataset(test_features, test_labels, input_shape)
-
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
-
-    model = lmk_cnn((1, *input_shape), num_classes).to(device)
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size, gamma)
-
-    # Training loop
-    for epoch in range(epochs):
-        train_loss, train_acc = train_model(model, train_loader, criterion, optimizer, device)
-        val_loss, val_acc = evaluate_model(model, val_loader, criterion, device)
-
-        print(f"Epoch {epoch+1}/{epochs}:")
-        print(f"  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}")
-        print(f"  Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
-
-        if (epoch+1)%5==0:
-            test_loss, test_acc = evaluate_model(model, test_loader, criterion, device)
-            print("------------------------\nAT ", epoch+1, "EPOCHS")
-            print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
-            print(f"Test Acc: {test_acc:.4f}", "Epochs:", epoch+1, "LR:", learning_rate, "Step:", step_size, "Gamma:", gamma)
-
-        scheduler.step()
-
-
-    #Evaluation on the test set
-    test_loss, test_acc = evaluate_model(model, test_loader, criterion, device)
-    print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
-    print(f"Test Acc: {test_acc:.4f}", "Epochs:", num_epochs, "LR:", learning_rate, "Step:", step_size, "Gamma:", gamma)
-
-    # Save the model
-    torch.save(model.state_dict(), "sign_language_cnn_model.pth")
-    print("Model saved to sign_language_cnn_model.pth")
-
 def filter_nothing():
     
     sets = {
@@ -244,23 +201,162 @@ def filter_nothing():
         print(f"  Adjusted features saved to: {filtered_features_path}")
         print(f"  Adjusted labels saved to: {filtered_labels_path}\n")
 
-if __name__ == "__main__": 
+def train_model_main(train_features, train_labels, val_features, val_labels, num_classes, input_shape=(9, 14), 
+                     batch_size=32, epochs=30, learning_rate=0.0015, step_size=3, gamma=0.15):
+    
+    train_dataset = HandSignDataset(train_features, train_labels, input_shape)
+    val_dataset = HandSignDataset(val_features, val_labels, input_shape)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device}")
+
+    # Initialize the model, loss function, optimizer, and scheduler
+    model = lmk_cnn((1, *input_shape), num_classes).to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size, gamma)
+
+    # Training loop
+    for epoch in range(epochs):
+        train_loss, train_acc = train_model(model, train_loader, criterion, optimizer, device)
+        val_loss, val_acc = evaluate_model(model, val_loader, criterion, device)
+
+        print(f"Epoch {epoch+1}/{epochs}:")
+        print(f"  Train Loss: {train_loss:.4f}, Train Acc: {train_acc:.4f}")
+        print(f"  Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
+
+        scheduler.step()
+
+    # Save the trained model
+    torch.save(model.state_dict(), "sign_language_cnn_model.pth")
+    print("Model saved to sign_language_cnn_model.pth")
+
+    return model  # Return the trained model for testing
+
+
+def test_model_main(model, test_features, test_labels, input_shape=(9, 14), batch_size=32, class_names=None, output_path="confusion_matrix.png"):
+    
+    test_dataset = HandSignDataset(test_features, test_labels, input_shape)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model.to(device)  
+
+    criterion = nn.CrossEntropyLoss()
+
+    all_preds = []
+    all_labels = []
+
+    model.eval()
+    total_loss = 0
+    correct = 0
+
+    with torch.no_grad():
+        for features, labels in test_loader:
+            features, labels = features.to(device), labels.to(device)
+
+            outputs = model(features)
+            loss = criterion(outputs, labels)
+
+            total_loss += loss.item()
+            _, preds = torch.max(outputs, 1)
+            correct += (preds == labels).sum().item()
+
+            # Store predictions and labels for confusion matrix
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+
+    # Calculate metrics
+    test_loss = total_loss / len(test_loader)
+    test_acc = correct / len(test_loader.dataset)
+    print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
+
+    # Generate the confusion matrix
+    conf_matrix = confusion_matrix(all_labels, all_preds)
+    print("Confusion Matrix:")
+    print(conf_matrix)
+
+    # Optionally display the confusion matrix as a heatmap
+    if class_names is None:
+        class_names = [str(i) for i in range(conf_matrix.shape[0])]
+
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=class_names, yticklabels=class_names)
+    plt.xlabel("Predicted Labels")
+    plt.ylabel("True Labels")
+    plt.title("Confusion Matrix")
+    plt.tight_layout()
+
+    # Save the confusion matrix as an image
+    plt.savefig(output_path)
+    print(f"Confusion matrix saved as {output_path}")
+
+    # Show the confusion matrix
+    plt.show()
+
+    # Optionally display a classification report
+    print("\nClassification Report:")
+    print(classification_report(all_labels, all_preds, target_names=class_names))
+
+    return test_loss, test_acc, conf_matrix  # Return the confusion matrix as well
+
+
+if __name__ == "__main__":
     set_seed(seed)
 
-    train_features = r".\dataset.\train_data.npy"  
-    train_labels = r".\dataset.\train_labels.npy"      
-    val_features = r".\dataset.\validation_data.npy"      
-    val_labels = r".\dataset.\validation_labels.npy"          
-    test_features = r".\dataset.\test_data.npy"    
-    test_labels = r".\dataset.\test_labels.npy"  
-    
+    # train_features = r".\dataset.\train_data.npy"
+    # train_labels = r".\dataset.\train_labels.npy"
+    # val_features = r".\dataset.\validation_data.npy"
+    # val_labels = r".\dataset.\validation_labels.npy"
+    # test_features = r".\dataset.\test_data.npy"
+    # test_labels = r".\dataset.\test_labels.npy"
 
+    # train_features = r".\dataset\with_nothing.\train_data.npy"
+    # train_labels = r".\dataset\with_nothing.\train_labels.npy"
+    # val_features = r".\dataset\with_nothing.\validation_data.npy"
+    # val_labels = r".\dataset\with_nothing.\validation_labels.npy"
+    # test_features = r".\dataset\with_nothing.\test_data.npy"
+    # test_labels = r".\dataset\with_nothing.\test_labels.npy"
+
+    train_features = r".\dataset\train_data_200.npy"
+    train_labels = r".\dataset\train_labels_200.npy"
+    val_features = r".\dataset\validation_data_200.npy"
+    val_labels = r".\dataset\validation_labels_200.npy"
+    test_features = r".\dataset\test_data_200.npy"
+    test_labels = r".\dataset\test_labels_200.npy"
+
+   
     # filter_nothing()
     # train_features = r".\dataset\train_data_filtered.npy"
     # train_labels = r".\dataset\train_labels_filtered.npy"
     # val_features = r".\dataset\validation_data_filtered.npy"
     # val_labels = r".\dataset\validation_labels_filtered.npy"
     # test_features = r".\dataset\test_data_filtered.npy"
-    # test_labels = r".\dataset\test_labels_filtered.npy"                          
+    # test_labels = r".\dataset\test_labels_filtered.npy"
+
+    # Train the model
+    trained_model = train_model_main(train_features, train_labels, val_features, val_labels, num_classes, (9, 14), 
+                                     batch_size, num_epochs, learning_rate, step_size, gamma)
+
+    #Test the model
+    # class_names = ('A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+    #             'minus', 'N', 'nothing', 'O', 'P', 'parentheses', 'period', 'Q', 'question mark', 'R', 'S', 'space',
+    #             'T', 'U', 'V', 'W', 'X', 'Y', 'Z')
     
-    main(train_features, train_labels, val_features, val_labels, test_features, test_labels, num_classes, (9, 14), batch_size, num_epochs, learning_rate, step_size, gamma)
+    class_names = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L','M', 'N', 'nothing', 'O', 'P', 
+        'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'comma', 'exclamation mark', 'minus', 'nothing', 
+        'parentheses', 'period', 'question mark', 'space')
+    
+    # class_names = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
+    #     'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'comma', 'del', 'exclamation mark', 'minus')
+    
+    # class_names = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
+    #     'Q', 'R', 'S', 'T')
+    
+
+    #class_names = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')
+    
+    test_model_main(trained_model, test_features, test_labels, (9, 14), batch_size, class_names, output_path="confusion_matrix_test.png")
