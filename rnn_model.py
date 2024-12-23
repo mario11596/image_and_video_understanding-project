@@ -227,17 +227,3 @@ if training_validation_mode:
     training_and_validation_plot(train_loss, val_loss)
 
     torch.save(model.state_dict(), "sign_language_rnn_model.pth")
-
-else:
-    model.load_state_dict(torch.load("sign_language_rnn_model.pth"))
-
-    test_data = np.load(test_directory)
-    test_labels = np.load(test_labels_directory)
-
-    test_data_tensor = torch.tensor(test_data, dtype=torch.float32)
-    test_labels_tensor = torch.tensor(test_labels, dtype=torch.long)
-
-    test_dataset = TensorDataset(test_data_tensor, test_labels_tensor)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=shuffle)
-
-    eval_classifier()

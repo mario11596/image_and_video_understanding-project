@@ -7,6 +7,7 @@ import torch
 from PIL import Image
 from featureDetection.live_detection import process_video_frame
 import rnn_model
+import actual_cnn
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
@@ -57,10 +58,10 @@ class SignLanguageApp(QWidget):
 
         self.recognized_text = ""
 
-        self.model = self.load_model("sign_language_rnn_model.pth")
+        self.model = self.load_model("sign_language_cnn_model.pth")
 
     def load_model(self, model_path):
-        model = rnn_model.RNNModel().to(device)
+        model = actual_cnn.CNN().to(device)
         state_dict = torch.load(model_path, map_location=device)
         model.load_state_dict(state_dict)
         model.eval()
