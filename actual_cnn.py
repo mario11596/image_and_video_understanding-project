@@ -13,8 +13,8 @@ num_classes = 35
 num_epochs = 30
 batch_size = 32
 learning_rate = 0.001
-step_size = 3
-gamma = 0.15
+step_size = 5
+gamma = 0.1
 seed=17
 
 def set_seed(seed=17):
@@ -158,48 +158,6 @@ def evaluate_model(model, dataloader, criterion, device):
     accuracy = correct / len(dataloader.dataset)
     return total_loss / len(dataloader), accuracy
 
-def filter_nothing():
-    
-    sets = {
-        "train": {
-            "features": r".\dataset\train_data.npy",
-            "labels": r".\dataset\train_labels.npy"
-        },
-        "validation": {
-            "features": r".\dataset\validation_data.npy",
-            "labels": r".\dataset\validation_labels.npy"
-        },
-        "test": {
-            "features": r".\dataset\test_data.npy",
-            "labels": r".\dataset\test_labels.npy"
-        }
-    }
-
-    # Iterate over each dataset (train, validation, test)
-    for split, paths in sets.items():
-        # Load features and labels
-        features = np.load(paths["features"])
-        labels = np.load(paths["labels"])
-
-        # Remove the label 18 itself ("nothing")
-        valid_indices = labels != 18
-        filtered_features = features[valid_indices]
-        filtered_labels = labels[valid_indices]
-        # Adjust the labels
-        filtered_labels = np.where(filtered_labels > 18, filtered_labels - 1, filtered_labels)
-        
-
-        # Save the adjusted features and labels with new filenames
-        filtered_features_path = paths["features"].replace(".npy", "_filtered.npy")
-        filtered_labels_path = paths["labels"].replace(".npy", "_filtered.npy")
-        np.save(filtered_features_path, filtered_features)
-        np.save(filtered_labels_path, filtered_labels)
-
-        print(f"Adjusted {split} data saved:")
-        print(f"  Original size: {features.shape[0]}")
-        print(f"  Adjusted size: {filtered_features.shape[0]}")
-        print(f"  Adjusted features saved to: {filtered_features_path}")
-        print(f"  Adjusted labels saved to: {filtered_labels_path}\n")
 
 def train_model_main(train_features, train_labels, val_features, val_labels, num_classes, input_shape=(9, 14), 
                      batch_size=32, epochs=30, learning_rate=0.0015, step_size=3, gamma=0.15):
@@ -237,20 +195,26 @@ def train_model_main(train_features, train_labels, val_features, val_labels, num
     return model  # Return the trained model for testing
 
 
-def test_model_main(model, test_features, test_labels, input_shape=(9, 14), batch_size=32, class_names=None, output_path="confusion_matrix.png"):
+def test_model_main(test_features, test_labels, input_shape=(9, 14), batch_size=32, class_names=None, output_path="confusion_matrix.png"):
     
     test_dataset = HandSignDataset(test_features, test_labels, input_shape)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = lmk_cnn((1, *input_shape), num_classes).to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size, gamma)
     model.to(device)  
 
-    criterion = nn.CrossEntropyLoss()
+    #reload saved model
+    model.load_state_dict(torch.load("sign_language_cnn_model.pth", map_location=device))
+    model.eval()
+
 
     all_preds = []
     all_labels = []
 
-    model.eval()
     total_loss = 0
     correct = 0
 
@@ -264,10 +228,13 @@ def test_model_main(model, test_features, test_labels, input_shape=(9, 14), batc
             total_loss += loss.item()
             _, preds = torch.max(outputs, 1)
             correct += (preds == labels).sum().item()
-
+            
+            
             # Store predictions and labels for confusion matrix
             all_preds.extend(preds.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
+                
+            
 
     # Calculate metrics
     test_loss = total_loss / len(test_loader)
@@ -304,22 +271,88 @@ def test_model_main(model, test_features, test_labels, input_shape=(9, 14), batc
     return test_loss, test_acc, conf_matrix  # Return the confusion matrix as well
 
 
+def test_model_with_threshold(test_features, test_labels, input_shape=(9, 14), batch_size=32, class_names=None, output_path="confusion_matrix.png", threshold=0.5):
+    """
+    Test the model and discard predictions with softmax probability below a given threshold.
+    """
+    test_dataset = HandSignDataset(test_features, test_labels, input_shape)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = lmk_cnn((1, *input_shape), num_classes).to(device)
+    model.load_state_dict(torch.load("sign_language_cnn_model.pth", map_location=device))
+    model.eval()
+
+    all_preds = []
+    all_labels = []
+    discarded_count = 0
+
+    total_loss = 0
+    correct = 0
+
+    with torch.no_grad():
+        for features, labels in test_loader:
+            features, labels = features.to(device), labels.to(device)
+
+            outputs = model(features)
+            probabilities = torch.nn.functional.softmax(outputs, dim=1)
+            max_probs, preds = torch.max(probabilities, dim=1)
+
+            # Discard predictions with max probability below threshold
+            for i in range(features.size(0)):
+                if max_probs[i] < threshold:
+                    discarded_count += 1
+                    continue  # Skip this prediction
+                
+                all_preds.append(preds[i].cpu().item())
+                all_labels.append(labels[i].cpu().item())
+
+                if preds[i] == labels[i]:
+                    correct += 1
+
+    # Calculate metrics
+    total_samples = len(test_loader.dataset)
+    valid_samples = total_samples - discarded_count
+    accuracy = correct / valid_samples if valid_samples > 0 else 0.0
+
+    print(f"Total samples: {total_samples}")
+    print(f"Valid samples (above threshold): {valid_samples}")
+    print(f"Discarded samples (below threshold): {discarded_count}")
+    print(f"Accuracy: {accuracy:.4f}")
+
+    # Generate the confusion matrix
+    conf_matrix = confusion_matrix(all_labels, all_preds)
+    print("Confusion Matrix:")
+    print(conf_matrix)
+
+    # Optionally display the confusion matrix as a heatmap
+    if class_names is None:
+        class_names = [str(i) for i in range(conf_matrix.shape[0])]
+
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", xticklabels=class_names, yticklabels=class_names)
+    plt.xlabel("Predicted Labels")
+    plt.ylabel("True Labels")
+    plt.title("Confusion Matrix")
+    plt.tight_layout()
+
+    # Save the confusion matrix as an image
+    plt.savefig(output_path)
+    print(f"Confusion matrix saved as {output_path}")
+
+    # Show the confusion matrix
+    plt.show()
+
+    # Optionally display a classification report
+    print("\nClassification Report:")
+    print(classification_report(all_labels, all_preds, target_names=class_names))
+
+    return accuracy, conf_matrix  # Return accuracy and confusion matrix
+
+
+
 if __name__ == "__main__":
     set_seed(seed)
-
-    # train_features = r".\dataset.\train_data.npy"
-    # train_labels = r".\dataset.\train_labels.npy"
-    # val_features = r".\dataset.\validation_data.npy"
-    # val_labels = r".\dataset.\validation_labels.npy"
-    # test_features = r".\dataset.\test_data.npy"
-    # test_labels = r".\dataset.\test_labels.npy"
-
-    # train_features = r".\dataset\with_nothing.\train_data.npy"
-    # train_labels = r".\dataset\with_nothing.\train_labels.npy"
-    # val_features = r".\dataset\with_nothing.\validation_data.npy"
-    # val_labels = r".\dataset\with_nothing.\validation_labels.npy"
-    # test_features = r".\dataset\with_nothing.\test_data.npy"
-    # test_labels = r".\dataset\with_nothing.\test_labels.npy"
 
     train_features = r".\dataset\train_data_200.npy"
     train_labels = r".\dataset\train_labels_200.npy"
@@ -328,35 +361,14 @@ if __name__ == "__main__":
     test_features = r".\dataset\test_data_200.npy"
     test_labels = r".\dataset\test_labels_200.npy"
 
-   
-    # filter_nothing()
-    # train_features = r".\dataset\train_data_filtered.npy"
-    # train_labels = r".\dataset\train_labels_filtered.npy"
-    # val_features = r".\dataset\validation_data_filtered.npy"
-    # val_labels = r".\dataset\validation_labels_filtered.npy"
-    # test_features = r".\dataset\test_data_filtered.npy"
-    # test_labels = r".\dataset\test_labels_filtered.npy"
-
     # Train the model
-    trained_model = train_model_main(train_features, train_labels, val_features, val_labels, num_classes, (9, 14), 
-                                     batch_size, num_epochs, learning_rate, step_size, gamma)
-
-    #Test the model
-    # class_names = ('A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-    #             'minus', 'N', 'nothing', 'O', 'P', 'parentheses', 'period', 'Q', 'question mark', 'R', 'S', 'space',
-    #             'T', 'U', 'V', 'W', 'X', 'Y', 'Z')
+    # trained_model = train_model_main(train_features, train_labels, val_features, val_labels, num_classes, (9, 14), 
+    #                                   batch_size, num_epochs, learning_rate, step_size, gamma)
     
     class_names = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L','M', 'N', 'nothing', 'O', 'P', 
         'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'comma', 'exclamation mark', 'minus', 'nothing', 
         'parentheses', 'period', 'question mark', 'space')
     
-    # class_names = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
-    #     'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'comma', 'del', 'exclamation mark', 'minus')
     
-    # class_names = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 
-    #     'Q', 'R', 'S', 'T')
-    
-
-    #class_names = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J')
-    
-    test_model_main(trained_model, test_features, test_labels, (9, 14), batch_size, class_names, output_path="confusion_matrix_test.png")
+    #test_model_main(test_features, test_labels, (9, 14), batch_size, class_names, output_path="confusion_matrix_test_2.png")
+    test_model_with_threshold(test_features, test_labels, (9, 14), batch_size, class_names, output_path="confusion_matrix_test_2.png")
