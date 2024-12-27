@@ -7,13 +7,13 @@ import torch
 from PIL import Image
 from featureDetection.live_detection import process_video_frame
 import rnn_model
-import actual_cnn
 import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
+# Interface of the application with setting of the layouts
 class SignLanguageApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -54,19 +54,22 @@ class SignLanguageApp(QWidget):
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_camera)
-        self.timer.start(10)
+        self.timer.start(1000)
 
         self.recognized_text = ""
 
-        self.model = self.load_model("sign_language_cnn_model.pth")
+        self.model = self.load_model("sign_language_rnn_model.pth")
 
+    # Load the trained RNN model
     def load_model(self, model_path):
-        model = actual_cnn.CNN().to(device)
+        model = rnn_model.RNNModel().to(device)
         state_dict = torch.load(model_path, map_location=device)
         model.load_state_dict(state_dict)
         model.eval()
+
         return model
 
+    # Show on camera new frame with landmarks
     def update_camera(self):
         ret, frame = self.cap.read()
         if ret:
@@ -86,16 +89,22 @@ class SignLanguageApp(QWidget):
 
             self.camera_label.setPixmap(QPixmap.fromImage(qimg))
 
+    # Predict the sign using the model
     def recognize_letter(self, features):
         feature_tensor = torch.tensor(features, dtype=torch.float32).unsqueeze(0).to(device)
 
         with torch.no_grad():
             output = self.model(feature_tensor)
             _, predicted_class = torch.max(output, 1)
-            letter = chr(predicted_class.item() + ord('A'))
 
-        return letter if predicted_class.item() < 26 else None
+            if 0 <= predicted_class.item() < 26:
+                letter = chr(predicted_class.item() + ord('A'))
+                print(letter)
+            else:
+                letter = None
+        return letter
 
+    # Show the sign on the left part of application window
     def update_recognized_letter(self, letter):
 
         self.recognized_text += letter
@@ -105,13 +114,16 @@ class SignLanguageApp(QWidget):
         if letter_image:
             self.letter_label.setPixmap(QPixmap.fromImage(letter_image))
 
+    # Get the sign image
     def get_letter_image(self, letter):
         try:
             letter_img_path = f"letters/{letter}.png"
             img = Image.open(letter_img_path)
             img = img.convert("RGB")
             qimg = QImage(img.tobytes(), img.width, img.height, QImage.Format_RGB888)
+
             return qimg
+
         except Exception as e:
             print(f"Error loading letter image: {e}")
             return None

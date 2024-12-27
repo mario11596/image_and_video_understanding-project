@@ -1,17 +1,20 @@
 import os
 import cv2
 
-
+# This method is to create dataset from letter A to Z
 def create_custom_dataset():
     # put here the name of cusom folder names
-    class_names = ['parentheses', 'question mark']
+    class_names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+                   'S','T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
     # path for custom repository
-    DATA_DIR = './custom_dataset'
+    DATA_DIR = './custom_dataset1'
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
 
     number_of_classes = len(class_names)
+
+    # Number of images per class
     dataset_size = 50
 
     cap = cv2.VideoCapture(0)
@@ -26,8 +29,8 @@ def create_custom_dataset():
         counter = 0
         while counter < dataset_size:
             ret, frame = cap.read()
-            cv2.putText(frame, None,
-                        (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2, cv2.LINE_AA)
+            cv2.putText(frame, None,(50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0),
+                        2, cv2.LINE_AA)
             cv2.imshow('frame', frame)
 
             key = cv2.waitKey(1) & 0xFF
@@ -40,5 +43,7 @@ def create_custom_dataset():
 
     cap.release()
     cv2.destroyAllWindows()
+
+
 if __name__ == '__main__':
     create_custom_dataset()

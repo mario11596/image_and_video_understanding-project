@@ -1,51 +1,22 @@
 import os
-import kagglehub
 import shutil
 from sklearn.model_selection import train_test_split
 
-folder_names = ['A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-                'minus', 'N', 'nothing', 'O', 'P', 'parentheses', 'period', 'Q', 'question mark', 'R', 'S', 'space',
+folder_names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+                'N', 'O', 'P', 'Q', 'R', 'S',
                 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
+# Paths for each part
+train_directory = r'.\dataset1\train'
+validation_directory = r'.\dataset1\validation'
+test_directory = r'.\dataset1\test'
+source_base = r'.\custom_dataset1'
 
-def download_kaggle_dataset():
-    path = kagglehub.dataset_download("grassknoted/asl-alphabet")
-
-    print("Path to dataset files:", path)
-
-    return path
-
-
-def copy_dataset(path_kaggle):
-    destination_path = os.getcwd()
-    if os.path.isdir(path_kaggle):
-        shutil.copytree(path_kaggle, os.path.join(destination_path, os.path.basename(path_kaggle)))
-        print(f"Folder copied to {destination_path}")
-    else:
-        print("Source path does not exist.")
+train_size = 0.8
 
 
-def combine_datasets():
-    source_path = r'.\custom_dataset'
-    destination_path = r'.\1\asl_alphabet_train\asl_alphabet_train'
-
-    if os.path.exists(source_path) and os.path.exists(destination_path):
-        for item in os.listdir(source_path):
-            item_path = os.path.join(source_path, item)
-            if os.path.isdir(item_path):
-                shutil.copytree(item_path, os.path.join(destination_path, item), dirs_exist_ok=True)
-            else:
-                shutil.copy2(item_path, destination_path)
-    else:
-        print("Source or destination path does not exist.")
-
-
+# This method split dataset on three parts: training/validation/testing
 def split_dataset():
-    train_directory = r'.\dataset\train'
-    validation_directory = r'.\dataset\validation'
-    test_directory = r'.\dataset\test'
-    source_base = r'.\1\asl_alphabet_train\asl_alphabet_train'
-
     os.makedirs(train_directory, exist_ok=True)
     os.makedirs(validation_directory, exist_ok=True)
     os.makedirs(test_directory, exist_ok=True)
@@ -59,11 +30,9 @@ def split_dataset():
         images = [os.path.join(source_folder, img) for img in os.listdir(source_folder) if
                   img.lower().endswith(('.png', '.jpg', '.jpeg'))]
 
-        # Split images into train + test (80% train, 20% test)
-        train_images, test_images = train_test_split(images, train_size=0.8, random_state=302)
+        train_images, test_images = train_test_split(images, train_size=train_size, random_state=302)
 
-        # Split the train set into train and validation sets (80% train, 20% validation)
-        train_images, validation_images = train_test_split(train_images, train_size=0.8, random_state=302)
+        train_images, validation_images = train_test_split(train_images, train_size=train_size, random_state=302)
 
         os.makedirs(train_folder, exist_ok=True)
         os.makedirs(validation_folder, exist_ok=True)
@@ -80,7 +49,4 @@ def split_dataset():
 
 
 if __name__ == '__main__':
-    #path_kaggle = download_kaggle_dataset()
-    #copy_dataset(path_kaggle)
-    #combine_datasets()
     split_dataset()

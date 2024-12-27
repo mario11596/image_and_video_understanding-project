@@ -7,20 +7,12 @@ from mediapipe.tasks.python.vision import HandLandmarker, HandLandmarkerOptions
 from mediapipe.tasks.python import vision
 
 
-def read_images_from_folders(base_folder, max_images_per_folder=200):
-    folder_image_count = {} 
-    
+def read_images_from_folders(base_folder):
     for root, _, files in os.walk(base_folder):
         folder_name = os.path.basename(root)
-        if folder_name not in folder_image_count:
-            folder_image_count[folder_name] = 0
         for file_name in files:
             if file_name.lower().endswith(('jpg', 'jpeg', 'png')):
-                if folder_image_count[folder_name] >= max_images_per_folder:
-                    break  # Stop processing files in this folder when max reached
-                
                 yield os.path.join(root, file_name), folder_name
-                folder_image_count[folder_name] += 1
 
 
 def process_hand_landmarker_result(output, label):
@@ -51,9 +43,8 @@ def process_hand_landmarker_result(output, label):
 
 
 if __name__ == '__main__':
-    
-    base_folder = './dataset/'
-    model_path = './featureDetection/hand_landmarker.task'
+    base_folder = '../dataset1/'
+    model_path = 'hand_landmarker.task'
     splits = ["train", "validation", "test"]
 
     mp_hands = mp.solutions.hands
@@ -62,47 +53,35 @@ if __name__ == '__main__':
     options = HandLandmarkerOptions(
         base_options=base_options,
         running_mode=vision.RunningMode.IMAGE)
-    
-    skip_folders = []  # List of classes to skip
 
     with HandLandmarker.create_from_options(options) as landmarker:
         for split in splits:
             print(f"Processing {split} split...")
             split_path = os.path.join(base_folder, split)
-
-            all_folders = sorted(os.listdir(split_path)) 
-            selected_folders = selected_folders = [folder for folder in all_folders if folder not in skip_folders]  # Exclude skipped folders
-
-            label_to_idx = {label: idx for idx, label in enumerate(selected_folders)}
-            print("Label to index mapping:", label_to_idx)
+            label_to_idx = {label: idx for idx, label in enumerate(os.listdir(split_path))}
 
             features = []
             labels = []
-            changing_label = "not a name"
-            for folder in selected_folders:  # Process only the selected folders
 
-                folder_path = os.path.join(split_path, folder)
-                for image_path, folder_label in read_images_from_folders(folder_path, 200):  # Limit to 50 images per folder
-                    if changing_label != folder_label:
-                        print(folder_label)
-                        changing_label = folder_label
-                    pil_image = Image.open(image_path)
-                    numpy_image = np.array(pil_image)
+            for image_path, folder_label in read_images_from_folders(split_path):
+                print(folder_label)
+                pil_image = Image.open(image_path)
+                numpy_image = np.array(pil_image)
 
-                    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
+                mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
 
-                    result = landmarker.detect(mp_image)
+                result = landmarker.detect(mp_image)
 
-                    processed_data = process_hand_landmarker_result(result, folder_label)
-                    combined_landmarks = np.concatenate(
-                        (processed_data["landmarkers_leftHand"], processed_data["landmarkers_rightHand"])
-                    )
-                    features.append(combined_landmarks)
-                    labels.append(label_to_idx[processed_data["label"]])
+                processed_data = process_hand_landmarker_result(result, folder_label)
+                combined_landmarks = np.concatenate(
+                    (processed_data["landmarkers_leftHand"], processed_data["landmarkers_rightHand"])
+                )
+                features.append(combined_landmarks)
+                labels.append(label_to_idx[processed_data["label"]])
 
 
             features = np.array(features, dtype=np.float32)
             labels = np.array(labels, dtype=np.int32)
 
-            np.save(os.path.join(base_folder, f"{split}_data_200.npy"), features)
-            np.save(os.path.join(base_folder, f"{split}_labels_200.npy"), labels)
+            np.save(f"{split}_data.npy", features)
+            np.save(f"{split}_labels.npy", labels)

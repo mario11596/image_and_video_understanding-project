@@ -47,9 +47,9 @@ def process_hand_landmarker_result(output):
 
         print(flattened_landmarks)
         if handedness.classification[0].label == "Left":
-            left_hand_landmarks = flattened_landmarks
-        elif handedness.classification[0].label == "Right":
             right_hand_landmarks = flattened_landmarks
+        elif handedness.classification[0].label == "Right":
+            left_hand_landmarks = flattened_landmarks
 
     return {
         "landmarkers_leftHand": np.array(left_hand_landmarks, dtype=np.float32),
@@ -73,8 +73,6 @@ def process_video_frame(frame):
             features = combined_landmarks
             features = np.array(features, dtype=np.float32)
 
-            print('gore sam')
             return cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR), features
         else:
-            print('dole sam')
             return frame, features
