@@ -10,7 +10,7 @@ import rnn_model
 
 num_classes = 34
 input_features = 63 * 2
-num_epochs = 2000
+num_epochs = 1100
 batch_size = 128
 shuffle = True
 training_validation_mode = False
