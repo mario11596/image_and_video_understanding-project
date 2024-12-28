@@ -12,6 +12,11 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+class_mapping = [
+            'A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'minus',
+                   'N', 'O', 'P', 'parentheses', 'period', 'Q', 'question mark', 'R', 'S', 'Space', 'T', 'U', 'V', 'W',
+                   'X', 'Y', 'Z'
+            ]
 
 # Interface of the application with setting of the layouts
 class SignLanguageApp(QWidget):
@@ -52,13 +57,19 @@ class SignLanguageApp(QWidget):
             print("Error: Camera not found or is unavailable.")
             return
 
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_camera)
-        self.timer.start(1000)
+        self.video_timer = QTimer(self)
+        self.video_timer.timeout.connect(self.update_camera)
+        self.video_timer.start(30)
+
+        self.process_timer = QTimer(self)
+        self.process_timer.timeout.connect(self.process_frame)
+        self.process_timer.start(1000)
 
         self.recognized_text = ""
+        self.latest_letter = None
 
         self.model = self.load_model("sign_language_rnn_model.pth")
+        self.latest_features = None
 
     # Load the trained RNN model
     def load_model(self, model_path):
@@ -77,17 +88,20 @@ class SignLanguageApp(QWidget):
 
             frame_to_show, features = process_video_frame(frame)
 
-            if len(features) > 0:
-                letter = self.recognize_letter(features)
-                if letter:
-                    self.update_recognized_letter(letter)
+            self.latest_features = features
 
             frame_rgb = cv2.cvtColor(frame_to_show, cv2.COLOR_BGR2RGB)
-
             h, w, ch = frame_rgb.shape
             qimg = QImage(frame_rgb.data, w, h, ch * w, QImage.Format_RGB888)
-
             self.camera_label.setPixmap(QPixmap.fromImage(qimg))
+
+    def process_frame(self):
+        if self.latest_features is not None and self.latest_features.size > 0:
+
+            letter = self.recognize_letter(self.latest_features)
+            if letter:
+                self.latest_letter = letter
+                self.update_recognized_letter(letter)
 
     # Predict the sign using the model
     def recognize_letter(self, features):
@@ -96,10 +110,11 @@ class SignLanguageApp(QWidget):
         with torch.no_grad():
             output = self.model(feature_tensor)
             _, predicted_class = torch.max(output, 1)
+            class_index = predicted_class.item()
 
-            if 0 <= predicted_class.item() < 26:
-                letter = chr(predicted_class.item() + ord('A'))
-                print(letter)
+            # Check if the index is valid in the class mapping
+            if 0 <= class_index < len(class_mapping):
+                letter = class_mapping[class_index]
             else:
                 letter = None
         return letter

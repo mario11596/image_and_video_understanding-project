@@ -75,4 +75,4 @@ def process_video_frame(frame):
 
             return cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR), features
         else:
-            return frame, features
+            return frame, None

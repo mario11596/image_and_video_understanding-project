@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-num_classes = 26
+num_classes = 34
 input_features = 63 * 2
 seed_num = 302
 
@@ -61,6 +61,7 @@ class RNNModel(nn.Module):
 
         self.fc2 = nn.Linear(32, 64)
         self.bn2 = nn.BatchNorm1d(64)
+        self.dropout = nn.Dropout(0.3)
         self.fc3 = nn.Linear(64, num_classes)
 
     def forward(self, x):
@@ -77,5 +78,6 @@ class RNNModel(nn.Module):
         x = self.fc2(x)
         x = self.bn2(x)
         x = self.relu(x)
+        x = self.dropout(x)
         x = self.fc3(x)
         return x
