@@ -4,8 +4,9 @@ import cv2
 # This method is to create dataset from letter A to Z
 def create_custom_dataset():
     # put here the name of cusom folder names
-    class_names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
-                   'S','T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+    class_names = ['A', 'B', 'C', 'comma', 'D', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'minus',
+                   'N', 'O', 'P', 'parentheses', 'period', 'Q', 'question mark', 'R', 'S', 'space', 'T', 'U', 'V', 'W',
+                   'X', 'Y', 'Z']
 
     # path for custom repository
     DATA_DIR = './custom_dataset1'
@@ -15,7 +16,7 @@ def create_custom_dataset():
     number_of_classes = len(class_names)
 
     # Number of images per class
-    dataset_size = 50
+    dataset_size = 100
 
     cap = cv2.VideoCapture(0)
 

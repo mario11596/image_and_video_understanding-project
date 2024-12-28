@@ -8,17 +8,18 @@ from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import rnn_model
 
-num_classes = 26
+num_classes = 34
 input_features = 63 * 2
-num_epochs = 1000
+num_epochs = 1100
 batch_size = 128
 shuffle = True
 training_validation_mode = False
 seed_num = 302
 learning_rate = 0.001
 
-classes = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U',
-           'V', 'W', 'X', 'Y', 'Z')
+classes = ('A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'minus',
+                   'N', 'O', 'P', 'parentheses', 'period', 'Q', 'question mark', 'R', 'S', 'Space', 'T', 'U', 'V', 'W',
+                   'X', 'Y', 'Z')
 
 
 def train_validation():
