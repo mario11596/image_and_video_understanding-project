@@ -18,35 +18,29 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 
 current_landmarks = None
 
-def draw_landmarks_on_image(rgb_image, detection_result):
-    hand_landmarks_list = detection_result.multi_hand_landmarks
-    annotated_image = np.copy(rgb_image)
+def print_result(result: HandLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
+    global current_landmarks
+    if result.hand_landmarks:
+        current_landmarks = result.hand_landmarks
+    else:
+        current_landmarks = None  # Clear current landmarks if no hands detected
 
-    for idx in range(len(hand_landmarks_list)):
-        hand_landmarks = hand_landmarks_list[idx]
+options = HandLandmarkerOptions(
+        base_options=BaseOptions(model_asset_path=model_path),
+        running_mode=VisionRunningMode.LIVE_STREAM,
+        result_callback=print_result,
+        num_hands=2
+    )
 
-        hand_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
-
-        for landmark in hand_landmarks.landmark:
-            hand_landmarks_proto.landmark.add(x=landmark.x, y=landmark.y, z=landmark.z)
-
-        mp.solutions.drawing_utils.draw_landmarks(
-            annotated_image,
-            hand_landmarks_proto,
-            mp.solutions.hands.HAND_CONNECTIONS,
-            mp.solutions.drawing_styles.get_default_hand_landmarks_style(),
-            mp.solutions.drawing_styles.get_default_hand_connections_style()
-        )
-
-    return annotated_image
+landmarker = HandLandmarker.create_from_options(options)
 
 def draw_landmarks_on_frame(frame, landmarks):
     connections = [
-        (0, 1), (1, 2), (2, 3), (3, 4),  #Thumb
-        (0, 5), (5, 6), (6, 7), (7, 8),  #Index finger
-        (5, 9), (9, 10), (10, 11), (11, 12),  #Middle finger
-        (9, 13), (13, 14), (14, 15), (15, 16),  #Ring finger
-        (13, 17), (0, 17), (17, 18), (18, 19), (19, 20)  #Pinky finger
+        (0, 1), (1, 2), (2, 3), (3, 4),  # Thumb
+        (0, 5), (5, 6), (6, 7), (7, 8),  # Index finger
+        (5, 9), (9, 10), (10, 11), (11, 12),  # Middle finger
+        (9, 13), (13, 14), (14, 15), (15, 16),  # Ring finger
+        (13, 17), (0, 17), (17, 18), (18, 19), (19, 20)  # Pinky finger
     ]
 
     for hand_landmarks in landmarks:
@@ -61,28 +55,17 @@ def draw_landmarks_on_frame(frame, landmarks):
             if start_idx < len(points) and end_idx < len(points):
                 cv2.line(frame, points[start_idx], points[end_idx], (86, 22, 217), 3)
 
-
-import numpy as np
-
 def process_hand_landmarker_result(output):
-    # Initialize landmarks with default values
     left_hand_landmarks = [0.0] * 63
     right_hand_landmarks = [0.0] * 63
 
-    print("Output:")
-    print(output)
-
-    # Iterate through detected hands and assign landmarks
     for hand_index, hand_landmarks in enumerate(output):
-        # Flatten the x, y, z coordinates of the landmarks
         flattened_landmarks = (
             [landmark.x for landmark in hand_landmarks] +
             [landmark.y for landmark in hand_landmarks] +
             [landmark.z for landmark in hand_landmarks]
         )
 
-        # Assign landmarks based on index
-        # Assuming the first detected hand is left and the second is right for this example
         if hand_index == 1:  # Assign the first hand as "Left"
             left_hand_landmarks = flattened_landmarks
         elif hand_index == 0:  # Assign the second hand as "Right"
@@ -92,21 +75,6 @@ def process_hand_landmarker_result(output):
         "landmarkers_leftHand": np.array(left_hand_landmarks, dtype=np.float32),
         "landmarkers_rightHand": np.array(right_hand_landmarks, dtype=np.float32)
     }
-
-
-def print_result(result: HandLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
-    global current_landmarks
-    if result.hand_landmarks:
-        current_landmarks = result.hand_landmarks
-
-
-options = HandLandmarkerOptions(
-        base_options=BaseOptions(model_asset_path=model_path),
-        running_mode=VisionRunningMode.LIVE_STREAM,
-        result_callback=print_result
-    )
-
-landmarker = HandLandmarker.create_from_options(options)
 
 def process_video_frame(frame):
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -124,4 +92,4 @@ def process_video_frame(frame):
         features = np.array(combined_landmarks, dtype=np.float32)
         return frame, features
 
-    return frame, []
+    return frame, []  # No features if no hands are detected
