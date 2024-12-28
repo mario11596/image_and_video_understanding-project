@@ -82,11 +82,10 @@ class SignLanguageApp(QWidget):
                 if letter:
                     self.update_recognized_letter(letter)
 
+            # Convert frame to RGB for display
             frame_rgb = cv2.cvtColor(frame_to_show, cv2.COLOR_BGR2RGB)
-
             h, w, ch = frame_rgb.shape
             qimg = QImage(frame_rgb.data, w, h, ch * w, QImage.Format_RGB888)
-
             self.camera_label.setPixmap(QPixmap.fromImage(qimg))
 
     # Predict the sign using the model

@@ -8,6 +8,16 @@ MARGIN = 10
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
+model_path = 'featureDetection/hand_landmarker.task'
+
+BaseOptions = mp.tasks.BaseOptions
+HandLandmarker = mp.tasks.vision.HandLandmarker
+HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
+HandLandmarkerResult = mp.tasks.vision.HandLandmarkerResult
+VisionRunningMode = mp.tasks.vision.RunningMode
+
+current_landmarks = None
+
 def draw_landmarks_on_image(rgb_image, detection_result):
     hand_landmarks_list = detection_result.multi_hand_landmarks
     annotated_image = np.copy(rgb_image)
@@ -30,49 +40,88 @@ def draw_landmarks_on_image(rgb_image, detection_result):
 
     return annotated_image
 
+def draw_landmarks_on_frame(frame, landmarks):
+    connections = [
+        (0, 1), (1, 2), (2, 3), (3, 4),  #Thumb
+        (0, 5), (5, 6), (6, 7), (7, 8),  #Index finger
+        (5, 9), (9, 10), (10, 11), (11, 12),  #Middle finger
+        (9, 13), (13, 14), (14, 15), (15, 16),  #Ring finger
+        (13, 17), (0, 17), (17, 18), (18, 19), (19, 20)  #Pinky finger
+    ]
+
+    for hand_landmarks in landmarks:
+        points = []
+        for landmark in hand_landmarks:
+            x = int(landmark.x * frame.shape[1])
+            y = int(landmark.y * frame.shape[0])
+            points.append((x, y))
+            cv2.circle(frame, (x, y), 8, (0, 178, 0), -1)
+
+        for start_idx, end_idx in connections:
+            if start_idx < len(points) and end_idx < len(points):
+                cv2.line(frame, points[start_idx], points[end_idx], (86, 22, 217), 3)
+
+
+import numpy as np
+
 def process_hand_landmarker_result(output):
-    # Extract left and right hand landmarks as flattened arrays
+    # Initialize landmarks with default values
     left_hand_landmarks = [0.0] * 63
     right_hand_landmarks = [0.0] * 63
 
-    for i, handedness in enumerate(output.multi_handedness):
-        hand_landmarks = output.multi_hand_landmarks[i]
-        flattened_landmarks = [
-                                  landmark.x for landmark in hand_landmarks.landmark
-                              ] + [
-                                  landmark.y for landmark in hand_landmarks.landmark
-                              ] + [
-                                  landmark.z for landmark in hand_landmarks.landmark
-                              ]
+    print("Output:")
+    print(output)
 
-        print(flattened_landmarks)
-        if handedness.classification[0].label == "Left":
-            right_hand_landmarks = flattened_landmarks
-        elif handedness.classification[0].label == "Right":
+    # Iterate through detected hands and assign landmarks
+    for hand_index, hand_landmarks in enumerate(output):
+        # Flatten the x, y, z coordinates of the landmarks
+        flattened_landmarks = (
+            [landmark.x for landmark in hand_landmarks] +
+            [landmark.y for landmark in hand_landmarks] +
+            [landmark.z for landmark in hand_landmarks]
+        )
+
+        # Assign landmarks based on index
+        # Assuming the first detected hand is left and the second is right for this example
+        if hand_index == 1:  # Assign the first hand as "Left"
             left_hand_landmarks = flattened_landmarks
+        elif hand_index == 0:  # Assign the second hand as "Right"
+            right_hand_landmarks = flattened_landmarks
 
     return {
         "landmarkers_leftHand": np.array(left_hand_landmarks, dtype=np.float32),
         "landmarkers_rightHand": np.array(right_hand_landmarks, dtype=np.float32)
     }
 
+
+def print_result(result: HandLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
+    global current_landmarks
+    if result.hand_landmarks:
+        current_landmarks = result.hand_landmarks
+
+
+options = HandLandmarkerOptions(
+        base_options=BaseOptions(model_asset_path=model_path),
+        running_mode=VisionRunningMode.LIVE_STREAM,
+        result_callback=print_result
+    )
+
+landmarker = HandLandmarker.create_from_options(options)
+
 def process_video_frame(frame):
-    with mp_hands.Hands(min_detection_confidence=0.5, min_tracking_confidence=0.5) as hands:
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
 
-        results = hands.process(frame_rgb)
-        features = []
+    timestamp_ms = int(cv2.getTickCount() / cv2.getTickFrequency() * 1000)
+    landmarker.detect_async(mp_image, timestamp_ms)
 
-        if results.multi_hand_landmarks:
-            annotated_image = draw_landmarks_on_image(frame_rgb, results)
+    if current_landmarks:
+        draw_landmarks_on_frame(frame, current_landmarks)
+        processed_data = process_hand_landmarker_result(current_landmarks)
+        combined_landmarks = np.concatenate(
+            (processed_data["landmarkers_leftHand"], processed_data["landmarkers_rightHand"])
+        )
+        features = np.array(combined_landmarks, dtype=np.float32)
+        return frame, features
 
-            processed_data = process_hand_landmarker_result(results)
-            combined_landmarks = np.concatenate(
-                (processed_data["landmarkers_leftHand"], processed_data["landmarkers_rightHand"])
-            )
-            features = combined_landmarks
-            features = np.array(features, dtype=np.float32)
-
-            return cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR), features
-        else:
-            return frame, features
+    return frame, []
