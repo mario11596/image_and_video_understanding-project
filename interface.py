@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QWidget, QSplitter, QPushButton
+
+from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QWidget, QSplitter
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
@@ -38,9 +39,6 @@ class SignLanguageApp(QWidget):
         self.splitter.setSizes([self.splitter.width() // 2, self.splitter.width() // 2])
 
         self.top_layout.addWidget(self.splitter)
-        self.delete_button = QPushButton("Clear Text")
-        self.delete_button.clicked.connect(self.clear_text)
-        self.top_layout.addWidget(self.delete_button, alignment=Qt.AlignRight)
         self.main_layout.addLayout(self.top_layout)
 
         self.text_input = QLineEdit()
