@@ -29,7 +29,7 @@ options = HandLandmarkerOptions(
         base_options=BaseOptions(model_asset_path=model_path),
         running_mode=VisionRunningMode.LIVE_STREAM,
         result_callback=print_result,
-        num_hands=2
+        num_hands=1
     )
 
 landmarker = HandLandmarker.create_from_options(options)
@@ -66,9 +66,9 @@ def process_hand_landmarker_result(output):
             [landmark.z for landmark in hand_landmarks]
         )
 
-        if hand_index == 1:  # Assign the first hand as "Left"
+        if hand_index == 1:  #Left
             left_hand_landmarks = flattened_landmarks
-        elif hand_index == 0:  # Assign the second hand as "Right"
+        elif hand_index == 0:  #Right
             right_hand_landmarks = flattened_landmarks
 
     return {
@@ -92,4 +92,4 @@ def process_video_frame(frame):
         features = np.array(combined_landmarks, dtype=np.float32)
         return frame, features
 
-    return frame, []  # No features if no hands are detected
+    return frame, [] #nothing detected
