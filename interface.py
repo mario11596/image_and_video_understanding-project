@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QWidget, QSplitter
+from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QWidget, QSplitter, QPushButton
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
@@ -14,7 +14,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class_mapping = [
             'A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'minus',
-                   'N', 'O', 'P', 'parentheses', 'period', 'Q', 'question mark', 'R', 'S', 'Space', 'T', 'U', 'V', 'W',
+                   'N', 'O', 'P', 'period', 'Q', 'question mark', 'R', 'S', 'Space', 'T', 'U', 'V', 'W',
                    'X', 'Y', 'Z'
             ]
 
@@ -38,6 +38,9 @@ class SignLanguageApp(QWidget):
         self.splitter.setSizes([self.splitter.width() // 2, self.splitter.width() // 2])
 
         self.top_layout.addWidget(self.splitter)
+        self.delete_button = QPushButton("Clear Text")
+        self.delete_button.clicked.connect(self.clear_text)
+        self.top_layout.addWidget(self.delete_button, alignment=Qt.AlignRight)
         self.main_layout.addLayout(self.top_layout)
 
         self.text_input = QLineEdit()
@@ -122,8 +125,23 @@ class SignLanguageApp(QWidget):
 
     # Show the sign on the left part of application window
     def update_recognized_letter(self, letter):
+        if letter == "del":
+            self.recognized_text = self.recognized_text[:-1]
+        elif letter == "Space":
+            self.recognized_text += " "
+        elif letter == "exclamation mark":
+            self.recognized_text += "!"
+        elif letter == "period":
+            self.recognized_text += "."
+        elif letter == "question mark":
+            self.recognized_text += "?"
+        elif letter == "comma":
+            self.recognized_text += ","
+        elif letter == "minus":
+            self.recognized_text += "-"
+        else:
+            self.recognized_text += letter
 
-        self.recognized_text += letter
         self.text_input.setText(self.recognized_text)
 
         letter_image = self.get_letter_image(letter)

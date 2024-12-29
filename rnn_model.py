@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-num_classes = 34
+num_classes = 33
 input_features = 63 * 2
 seed_num = 302
 
