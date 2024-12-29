@@ -14,7 +14,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 class SignLanguageApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Sign Language Recognition")
+        self.root.title("Sign Language")
 
         # Create main layout frames
         self.top_frame = tk.Frame(root)
