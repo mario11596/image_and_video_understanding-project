@@ -56,8 +56,7 @@ def draw_landmarks_on_frame(frame, landmarks):
                 cv2.line(frame, points[start_idx], points[end_idx], (86, 22, 217), 3)
 
 def process_hand_landmarker_result(output):
-    left_hand_landmarks = [0.0] * 63
-    right_hand_landmarks = [0.0] * 63
+    hand_landmarks_detection = [0.0] * 63
 
     for hand_index, hand_landmarks in enumerate(output):
         flattened_landmarks = (
@@ -67,13 +66,12 @@ def process_hand_landmarker_result(output):
         )
 
         if hand_index == 1:  #Left
-            left_hand_landmarks = flattened_landmarks
+            hand_landmarks_detection = flattened_landmarks
         elif hand_index == 0:  #Right
-            right_hand_landmarks = flattened_landmarks
+            hand_landmarks_detection = flattened_landmarks
 
     return {
-        "landmarkers_leftHand": np.array(left_hand_landmarks, dtype=np.float32),
-        "landmarkers_rightHand": np.array(right_hand_landmarks, dtype=np.float32)
+        "hand_landmarks_detection": np.array(hand_landmarks_detection, dtype=np.float32)
     }
 
 def process_video_frame(frame):
@@ -86,9 +84,8 @@ def process_video_frame(frame):
     if current_landmarks:
         draw_landmarks_on_frame(frame, current_landmarks)
         processed_data = process_hand_landmarker_result(current_landmarks)
-        combined_landmarks = np.concatenate(
-            (processed_data["landmarkers_leftHand"], processed_data["landmarkers_rightHand"])
-        )
+        combined_landmarks = processed_data["hand_landmarks_detection"]
+
         features = np.array(combined_landmarks, dtype=np.float32)
         return frame, features
 

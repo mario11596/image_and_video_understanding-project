@@ -9,11 +9,11 @@ import seaborn as sns
 import rnn_model
 
 num_classes = 33
-input_features = 63 * 2
+input_features = 63
 num_epochs = 1500
 batch_size = 128
 shuffle = True
-training_validation_mode = True
+training_validation_mode = False
 seed_num = 302
 learning_rate = 0.001
 

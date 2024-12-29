@@ -1,4 +1,3 @@
-
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QWidget, QSplitter
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt, QTimer
@@ -14,10 +13,11 @@ warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class_mapping = [
-            'A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'minus',
-                   'N', 'O', 'P', 'period', 'Q', 'question mark', 'R', 'S', 'Space', 'T', 'U', 'V', 'W',
-                   'X', 'Y', 'Z'
-            ]
+                'A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+                'minus', 'N', 'O', 'P', 'period', 'Q', 'question mark', 'R', 'S', 'Space', 'T', 'U', 'V', 'W', 'X',
+                'Y', 'Z'
+                ]
+
 
 # Interface of the application with setting of the layouts
 class SignLanguageApp(QWidget):

@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 
 num_classes = 33
-input_features = 63 * 2
+input_features = 63
 seed_num = 302
 
 np.random.seed(seed_num)
