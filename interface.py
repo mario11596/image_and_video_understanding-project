@@ -7,9 +7,7 @@ import torch
 from PIL import Image
 from featureDetection.live_detection import process_video_frame
 import rnn_model
-import warnings
 
-warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class_mapping = [
@@ -23,7 +21,7 @@ class_mapping = [
 class SignLanguageApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("Sign Language Recognition")
+        self.setWindowTitle("A transcription tool: from sign language to text")
 
         self.main_layout = QVBoxLayout()
         self.top_layout = QHBoxLayout()
@@ -45,9 +43,9 @@ class SignLanguageApp(QWidget):
         self.text_input.setReadOnly(True)
 
         font = QFont()
-        font.setPointSize(14)
+        font.setPointSize(16)
         self.text_input.setFont(font)
-        self.text_input.setFixedHeight(40)
+        self.text_input.setFixedHeight(50)
 
         self.main_layout.addWidget(self.text_input)
 
@@ -55,7 +53,7 @@ class SignLanguageApp(QWidget):
 
         self.cap = cv2.VideoCapture(0)
         if not self.cap.isOpened():
-            print("Error: Camera not found or is unavailable.")
+            print("Error: Your camera is not unavailable. The application can not start")
             return
 
         self.video_timer = QTimer(self)
@@ -64,7 +62,7 @@ class SignLanguageApp(QWidget):
 
         self.process_timer = QTimer(self)
         self.process_timer.timeout.connect(self.process_frame)
-        self.process_timer.start(1000)
+        self.process_timer.start(2000)
 
         self.recognized_text = ""
         self.latest_letter = None
@@ -74,7 +72,7 @@ class SignLanguageApp(QWidget):
 
     # Load the trained RNN model
     def load_model(self, model_path):
-        model = rnn_model.RNNModel().to(device)
+        model = rnn_model.ResidualNeuralNetworkModel().to(device)
         state_dict = torch.load(model_path, map_location=device)
         model.load_state_dict(state_dict)
         model.eval()
@@ -98,7 +96,7 @@ class SignLanguageApp(QWidget):
             self.camera_label.setPixmap(QPixmap.fromImage(qimg))
 
     def process_frame(self):
-        if self.latest_features is not None and self.latest_features.size > 0:
+        if self.latest_features.size > 0:
 
             letter = self.recognize_letter(self.latest_features)
             if letter:
@@ -143,22 +141,20 @@ class SignLanguageApp(QWidget):
         self.text_input.setText(self.recognized_text)
 
         letter_image = self.get_letter_image(letter)
+
         if letter_image:
             self.letter_label.setPixmap(QPixmap.fromImage(letter_image))
 
     # Get the sign image
     def get_letter_image(self, letter):
-        try:
-            letter_img_path = f"letters/{letter}.png"
-            img = Image.open(letter_img_path)
-            img = img.convert("RGB")
-            qimg = QImage(img.tobytes(), img.width, img.height, QImage.Format_RGB888)
+        letter_img_path = f"letters/{letter}.png"
 
-            return qimg
+        img = Image.open(letter_img_path)
+        img = img.convert("RGB")
+        qimg = QImage(img.tobytes(), img.width, img.height, QImage.Format_RGB888)
 
-        except Exception as e:
-            print(f"Error loading letter image: {e}")
-            return None
+        return qimg
+
 
     def closeEvent(self, event):
         self.cap.release()

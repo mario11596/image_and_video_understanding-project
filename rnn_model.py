@@ -16,27 +16,28 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 
-# Architecture of RNN model
+# Architecture of Residual neural network model
 class ResidualBlockWithBatchNorm(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(ResidualBlockWithBatchNorm, self).__init__()
 
-        self.fc1 = nn.Linear(in_channels, out_channels)
+        self.conv1 = nn.Conv1d(in_channels, out_channels, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm1d(out_channels)
         self.relu = nn.ReLU()
-        self.fc2 = nn.Linear(out_channels, out_channels)
+
+        self.conv2 = nn.Conv1d(out_channels, out_channels, kernel_size=3, padding=1)
         self.bn2 = nn.BatchNorm1d(out_channels)
 
         self.shortcut = nn.Identity()
         if in_channels != out_channels:
-            self.shortcut = nn.Linear(in_channels, out_channels)
+            self.shortcut = nn.Conv1d(in_channels, out_channels, kernel_size=1)
 
     def forward(self, x):
-        out = self.fc1(x)
+        out = self.conv1(x)
         out = self.bn1(out)
         out = self.relu(out)
 
-        out = self.fc2(out)
+        out = self.conv2(out)
         out = self.bn2(out)
 
         out += self.shortcut(x)
@@ -45,11 +46,11 @@ class ResidualBlockWithBatchNorm(nn.Module):
         return out
 
 
-class RNNModel(nn.Module):
-    def __init__(self, input_features=input_features, num_classes=num_classes):
-        super(RNNModel, self).__init__()
+class ResidualNeuralNetworkModel(nn.Module):
+    def __init__(self, num_classes=num_classes):
+        super(ResidualNeuralNetworkModel, self).__init__()
 
-        self.fc1 = nn.Linear(input_features, 128)
+        self.conv1 = nn.Conv1d(1, 128, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm1d(128)
         self.relu = nn.ReLU()
 
@@ -59,13 +60,15 @@ class RNNModel(nn.Module):
         self.layer4 = ResidualBlockWithBatchNorm(in_channels=64, out_channels=64)
         self.layer5 = ResidualBlockWithBatchNorm(in_channels=64, out_channels=32)
 
-        self.fc2 = nn.Linear(32, 64)
+        self.fc1 = nn.Linear(32 * 63, 64)
         self.bn2 = nn.BatchNorm1d(64)
         self.dropout = nn.Dropout(0.3)
-        self.fc3 = nn.Linear(64, num_classes)
+        self.fc2 = nn.Linear(64, num_classes)
 
     def forward(self, x):
-        x = self.fc1(x)
+        x = x.view(x.size(0), 1, -1)
+
+        x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
 
@@ -75,9 +78,12 @@ class RNNModel(nn.Module):
         x = self.layer4(x)
         x = self.layer5(x)
 
-        x = self.fc2(x)
+        x = torch.flatten(x, 1)
+
+        x = self.fc1(x)
         x = self.bn2(x)
         x = self.relu(x)
         x = self.dropout(x)
-        x = self.fc3(x)
+        x = self.fc2(x)
+
         return x

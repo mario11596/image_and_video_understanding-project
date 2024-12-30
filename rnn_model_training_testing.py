@@ -10,7 +10,7 @@ import rnn_model
 
 num_classes = 33
 input_features = 63
-num_epochs = 1500
+num_epochs = 500
 batch_size = 128
 shuffle = True
 training_validation_mode = False
@@ -140,7 +140,7 @@ test_directory = r'.\dataset1\test_data.npy'
 test_labels_directory = r'.\dataset1\test_labels.npy'
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = rnn_model.RNNModel().to(device)
+model = rnn_model.ResidualNeuralNetworkModel().to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=learning_rate)
