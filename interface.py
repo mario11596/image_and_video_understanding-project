@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QWidget, QSplitter
+from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QWidget, QSplitter, QPushButton
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QFont
@@ -21,7 +21,12 @@ class_mapping = [
 class SignLanguageApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("A transcription tool: from sign language to text")
+        self.clear_text = None
+        self.setWindowTitle("Sign Language Recognition")
+        self.setFixedSize(1280, 720)  # Fixed window size
+
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling)
+        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps)
 
         self.main_layout = QVBoxLayout()
         self.top_layout = QHBoxLayout()
@@ -29,23 +34,28 @@ class SignLanguageApp(QWidget):
         self.splitter = QSplitter(Qt.Horizontal)
 
         self.camera_label = QLabel("Camera Feed")
+        self.camera_label.setScaledContents(True)
         self.splitter.addWidget(self.camera_label)
 
         self.letter_label = QLabel("Recognized Letter")
+        self.letter_label.setScaledContents(True)
         self.splitter.addWidget(self.letter_label)
 
-        self.splitter.setSizes([self.splitter.width() // 2, self.splitter.width() // 2])
+        self.splitter.setSizes([740, 540])  # Set initial sizes for splitter panes
 
         self.top_layout.addWidget(self.splitter)
+        self.delete_button = QPushButton("Clear Text")
+        self.delete_button.clicked.connect(self.clear_text)
+        self.top_layout.addWidget(self.delete_button, alignment=Qt.AlignRight)
         self.main_layout.addLayout(self.top_layout)
 
         self.text_input = QLineEdit()
         self.text_input.setReadOnly(True)
 
         font = QFont()
-        font.setPointSize(16)
+        font.setPointSize(16)  # Larger font size for readability
         self.text_input.setFont(font)
-        self.text_input.setFixedHeight(50)
+        self.text_input.setFixedHeight(40)
 
         self.main_layout.addWidget(self.text_input)
 
@@ -53,7 +63,7 @@ class SignLanguageApp(QWidget):
 
         self.cap = cv2.VideoCapture(0)
         if not self.cap.isOpened():
-            print("Error: Your camera is not unavailable. The application can not start")
+            print("Error: Camera not found or is unavailable.")
             return
 
         self.video_timer = QTimer(self)
@@ -62,7 +72,7 @@ class SignLanguageApp(QWidget):
 
         self.process_timer = QTimer(self)
         self.process_timer.timeout.connect(self.process_frame)
-        self.process_timer.start(2000)
+        self.process_timer.start(1000)
 
         self.recognized_text = ""
         self.latest_letter = None
@@ -96,7 +106,7 @@ class SignLanguageApp(QWidget):
             self.camera_label.setPixmap(QPixmap.fromImage(qimg))
 
     def process_frame(self):
-        if self.latest_features.size > 0:
+        if len(self.latest_features) > 0:
 
             letter = self.recognize_letter(self.latest_features)
             if letter:
