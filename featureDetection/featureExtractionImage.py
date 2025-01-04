@@ -34,8 +34,6 @@ def process_hand_landmarker_result(output, label):
         elif handedness[0].category_name == "Right":
             hand_landmarks_detection = flattened_landmarks
 
-            print(hand_landmarks_detection)
-
     return {
         "label": label,
         "hand_landmarks_detection": np.array(hand_landmarks_detection, dtype=np.float32),
@@ -43,7 +41,7 @@ def process_hand_landmarker_result(output, label):
 
 
 if __name__ == '__main__':
-    base_folder = '../dataset1/'
+    base_folder = '../dataset/'
     model_path = 'hand_landmarker.task'
     splits = ["train", "validation", "test"]
 
