@@ -39,7 +39,7 @@ class SignLanguageRecognition(QWidget):
         self.letter_label.setAlignment(Qt.AlignCenter)
         self.splitter.addWidget(self.letter_label)
 
-        self.splitter.setSizes([self.splitter.width() // 2, self.splitter.width() // 2])
+        self.splitter.setSizes([740, 540])  # Set initial sizes for splitter panes
 
         self.top_layout.addWidget(self.splitter)
         self.main_layout.addLayout(self.top_layout)
@@ -64,7 +64,7 @@ class SignLanguageRecognition(QWidget):
 
         self.cap = cv2.VideoCapture(0)
         if not self.cap.isOpened():
-            print("Error: Your camera is not unavailable. The application can not start")
+            print("Error: Camera not found or is unavailable.")
             return
 
         self.real_time_update = QTimer(self)
