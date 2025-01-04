@@ -8,6 +8,7 @@ from sklearn.metrics import confusion_matrix
 import seaborn as sns
 import rnn_model
 
+
 num_classes = 33
 input_features = 63
 num_epochs = 500
@@ -18,10 +19,9 @@ seed_num = 302
 learning_rate = 0.001
 
 classes = ('A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'minus',
-                   'N', 'O', 'P', 'period', 'Q', 'question mark', 'R', 'S', 'Space', 'T', 'U', 'V', 'W',
-                   'X', 'Y', 'Z')
+            'N', 'O', 'P', 'period', 'Q', 'question mark', 'R', 'S', 'Space', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z')
 
-
+# Traning and validation of model
 def train_validation():
     train_avg_losses = []
     val_avg_losses = []
@@ -66,6 +66,7 @@ def train_validation():
     return train_avg_losses, val_avg_losses
 
 
+# Traning and validation plot with lines
 def training_and_validation_plot(train_loss_plot, val_loss_plot):
     plt.figure(figsize=(12, 6))
     plt.plot(train_loss_plot, label='Training Loss')
@@ -79,10 +80,8 @@ def training_and_validation_plot(train_loss_plot, val_loss_plot):
     plt.savefig('training_validation_rnn.jpg')
     plt.close()
 
-
+# Testing of the model
 def eval_classifier():
-    model.eval()
-
     correct = 0
     test_loss = 0
     total = 0
@@ -116,9 +115,10 @@ def eval_classifier():
     plt.title('Confusion Matrix')
     plt.xlabel('Predicted')
     plt.ylabel('True')
-    plt.savefig('confusion_matrix.jpg')
+    plt.savefig('confusion_matrix_rnn.jpg')
 
 
+# Set seed for reproducibility
 def set_seed(seed):
     np.random.seed(seed)
     np.random.seed(seed)
@@ -132,12 +132,13 @@ def set_seed(seed):
 
 set_seed(seed_num)
 
-train_directory = r'.\dataset1\train_data.npy'
-train_labels_directory = r'.\dataset1\train_labels.npy'
-validation_directory = r'.\dataset1\validation_data.npy'
-validation_labels_directory = r'.\dataset1\validation_labels.npy'
-test_directory = r'.\dataset1\test_data.npy'
-test_labels_directory = r'.\dataset1\test_labels.npy'
+# Paths of files
+train_directory = r'.\dataset\train_data.npy'
+train_labels_directory = r'.\dataset\train_labels.npy'
+validation_directory = r'.\dataset\validation_data.npy'
+validation_labels_directory = r'.\dataset\validation_labels.npy'
+test_directory = r'.\dataset\test_data.npy'
+test_labels_directory = r'.\dataset\test_labels.npy'
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = rnn_model.ResidualNeuralNetworkModel().to(device)

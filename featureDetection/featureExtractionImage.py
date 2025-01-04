@@ -17,8 +17,7 @@ def read_images_from_folders(base_folder):
 
 def process_hand_landmarker_result(output, label):
     # Extract left and right hand landmarks as flattened arrays
-    left_hand_landmarks = [0.0] * 63
-    right_hand_landmarks = [0.0] * 63
+    hand_landmarks_detection = [0.0] * 63
 
     for i, handedness in enumerate(output.handedness):
         hand_landmarks = output.hand_landmarks[i]
@@ -31,14 +30,15 @@ def process_hand_landmarker_result(output, label):
                               ]
 
         if handedness[0].category_name == "Left":
-            left_hand_landmarks = flattened_landmarks
+            hand_landmarks_detection = flattened_landmarks
         elif handedness[0].category_name == "Right":
-            right_hand_landmarks = flattened_landmarks
+            hand_landmarks_detection = flattened_landmarks
+
+            print(hand_landmarks_detection)
 
     return {
         "label": label,
-        "landmarkers_leftHand": np.array(left_hand_landmarks, dtype=np.float32),
-        "landmarkers_rightHand": np.array(right_hand_landmarks, dtype=np.float32)
+        "hand_landmarks_detection": np.array(hand_landmarks_detection, dtype=np.float32),
     }
 
 
@@ -73,9 +73,8 @@ if __name__ == '__main__':
                 result = landmarker.detect(mp_image)
 
                 processed_data = process_hand_landmarker_result(result, folder_label)
-                combined_landmarks = np.concatenate(
-                    (processed_data["landmarkers_leftHand"], processed_data["landmarkers_rightHand"])
-                )
+                combined_landmarks = processed_data["hand_landmarks_detection"]
+
                 features.append(combined_landmarks)
                 labels.append(label_to_idx[processed_data["label"]])
 

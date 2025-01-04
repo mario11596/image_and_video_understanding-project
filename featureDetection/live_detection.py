@@ -58,17 +58,18 @@ def draw_landmarks_on_frame(frame, landmarks):
 def process_hand_landmarker_result(output):
     hand_landmarks_detection = [0.0] * 63
 
-    for hand_index, hand_landmarks in enumerate(output):
-        flattened_landmarks = (
-            [landmark.x for landmark in hand_landmarks] +
-            [landmark.y for landmark in hand_landmarks] +
-            [landmark.z for landmark in hand_landmarks]
-        )
+    if output is not None:
+        for hand_index, hand_landmarks in enumerate(output):
+            flattened_landmarks = (
+                [landmark.x for landmark in hand_landmarks] +
+                [landmark.y for landmark in hand_landmarks] +
+                [landmark.z for landmark in hand_landmarks]
+            )
 
-        if hand_index == 1:  #Left
-            hand_landmarks_detection = flattened_landmarks
-        elif hand_index == 0:  #Right
-            hand_landmarks_detection = flattened_landmarks
+            if hand_index == 1:  #Left
+                hand_landmarks_detection = flattened_landmarks
+            elif hand_index == 0:  #Right
+                hand_landmarks_detection = flattened_landmarks
 
     return {
         "hand_landmarks_detection": np.array(hand_landmarks_detection, dtype=np.float32)

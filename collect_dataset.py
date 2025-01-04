@@ -1,11 +1,11 @@
 import os
 import cv2
 
-# This method is to create dataset from letter A to Z
+# Create dataset from letter A to Z
 def create_custom_dataset():
     # put here the name of cusom folder names
     class_names = ['A', 'B', 'C', 'comma', 'D', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'minus',
-                   'N', 'O', 'P', 'parentheses', 'period', 'Q', 'question mark', 'R', 'S', 'space', 'T', 'U', 'V', 'W',
+                   'N', 'O', 'P', 'period', 'Q', 'question mark', 'R', 'S', 'space', 'T', 'U', 'V', 'W',
                    'X', 'Y', 'Z']
 
     # path for custom repository
