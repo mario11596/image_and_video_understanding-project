@@ -5,7 +5,7 @@ Hand sign detection is a widely researched field, that has resulted in many publ
 Machine learning algorithms form the core of most of the recently published methods.
 Our project is build upon the state-of-the-art in sign language detection, and that allows users to write simple texts using sign language though a user interface. Signs performed by the user are captured by the webcam and classified in real-time by our pre-trained model. The classified signs will then get translated into alphabetic characters and displayed on the screen. Besides the standard American alphabet, we introduce seven additional signs: comma, dot, question mark, exclamation mark, minus, delete and space.
 
-## Python Packages
+## Python packages
 At the beginning you should install all requires Python packages using Python installer pip with following command:
 ```bash
 pip install -r requirements.txt
