@@ -49,11 +49,11 @@ def draw_landmarks_on_frame(frame, landmarks):
             x = int(landmark.x * frame.shape[1])
             y = int(landmark.y * frame.shape[0])
             points.append((x, y))
-            cv2.circle(frame, (x, y), 8, (0, 178, 0), -1)
+            cv2.circle(frame, (x, y), 8, (245,216,90), -1)
 
         for start_idx, end_idx in connections:
             if start_idx < len(points) and end_idx < len(points):
-                cv2.line(frame, points[start_idx], points[end_idx], (86, 22, 217), 3)
+                cv2.line(frame, points[start_idx], points[end_idx], (115,134,120), 3)
 
 def process_hand_landmarker_result(output):
     hand_landmarks_detection = [0.0] * 63

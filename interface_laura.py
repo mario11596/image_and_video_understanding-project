@@ -1,4 +1,3 @@
-
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QHBoxLayout, QLineEdit, QWidget, QSplitter, QPushButton
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt, QTimer
@@ -8,16 +7,15 @@ import torch
 from PIL import Image
 from featureDetection.live_detection import process_video_frame
 import rnn_model
-import warnings
 
-warnings.filterwarnings("ignore", category=UserWarning, module="tensorflow")
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class_mapping = [
-            'A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'minus',
-                   'N', 'O', 'P', 'period', 'Q', 'question mark', 'R', 'S', 'Space', 'T', 'U', 'V', 'W',
-                   'X', 'Y', 'Z'
-            ]
+                'A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+                'minus', 'N', 'O', 'P', 'period', 'Q', 'question mark', 'R', 'S', 'Space', 'T', 'U', 'V', 'W', 'X',
+                'Y', 'Z'
+                ]
+
 
 # Interface of the application with setting of the layouts
 class SignLanguageApp(QWidget):
@@ -43,7 +41,7 @@ class SignLanguageApp(QWidget):
         self.letter_label.setScaledContents(True)
         self.splitter.addWidget(self.letter_label)
 
-        self.splitter.setSizes([640, 640])  # Set initial sizes for splitter panes
+        self.splitter.setSizes([740, 540])  # Set initial sizes for splitter panes
 
         self.top_layout.addWidget(self.splitter)
         self.delete_button = QPushButton("Clear Text")
@@ -84,7 +82,7 @@ class SignLanguageApp(QWidget):
 
     # Load the trained RNN model
     def load_model(self, model_path):
-        model = rnn_model.RNNModel().to(device)
+        model = rnn_model.ResidualNeuralNetworkModel().to(device)
         state_dict = torch.load(model_path, map_location=device)
         model.load_state_dict(state_dict)
         model.eval()
@@ -108,7 +106,7 @@ class SignLanguageApp(QWidget):
             self.camera_label.setPixmap(QPixmap.fromImage(qimg))
 
     def process_frame(self):
-        if self.latest_features is not None and self.latest_features.size > 0:
+        if len(self.latest_features) > 0:
 
             letter = self.recognize_letter(self.latest_features)
             if letter:
@@ -153,22 +151,20 @@ class SignLanguageApp(QWidget):
         self.text_input.setText(self.recognized_text)
 
         letter_image = self.get_letter_image(letter)
+
         if letter_image:
             self.letter_label.setPixmap(QPixmap.fromImage(letter_image))
 
     # Get the sign image
     def get_letter_image(self, letter):
-        try:
-            letter_img_path = f"letters/{letter}.png"
-            img = Image.open(letter_img_path)
-            img = img.convert("RGB")
-            qimg = QImage(img.tobytes(), img.width, img.height, QImage.Format_RGB888)
+        letter_img_path = f"letters/{letter}.png"
 
-            return qimg
+        img = Image.open(letter_img_path)
+        img = img.convert("RGB")
+        qimg = QImage(img.tobytes(), img.width, img.height, QImage.Format_RGB888)
 
-        except Exception as e:
-            print(f"Error loading letter image: {e}")
-            return None
+        return qimg
+
 
     def closeEvent(self, event):
         self.cap.release()

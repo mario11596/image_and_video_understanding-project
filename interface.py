@@ -116,6 +116,9 @@ class SignLanguageRecognition(QWidget):
             if sign:
                 self.latest_letter = sign
                 self.update_recognized_sign(sign)
+        else:
+            self.update_recognized_sign(None)
+
 
     # Predict the sign using the model
     def recognize_sign(self, features):
@@ -123,14 +126,19 @@ class SignLanguageRecognition(QWidget):
 
         with torch.no_grad():
             output = self.model(feature_tensor)
+            probabilities = torch.nn.functional.softmax(output, dim=1)
             _, predicted_class = torch.max(output, 1)
             class_index = predicted_class.item()
+            certainty = round(probabilities[0, class_index].item() * 100, 2)
+
+            print("Certainty: ", certainty, " % certainty")
 
             # Check if the index is valid in the class mapping
             if 0 <= class_index < len(class_mapping):
                 letter = class_mapping[class_index]
             else:
-                letter = None
+                letter_image = self.set_sign_image(None)
+                self.letter_label.setPixmap(QPixmap.fromImage(letter_image))
         return letter
 
     # Show the sign on the right part of application window and put the sign in the textbox
@@ -149,7 +157,7 @@ class SignLanguageRecognition(QWidget):
             self.recognized_output_text += ","
         elif sign == "minus":
             self.recognized_output_text += "-"
-        else:
+        elif sign is not None:
             self.recognized_output_text += sign
 
         self.text_input.setText(self.recognized_output_text)
@@ -159,7 +167,11 @@ class SignLanguageRecognition(QWidget):
 
     # Get the sign image
     def set_sign_image(self, sign):
-        img = Image.open(f"letters/{sign}.png")
+        if sign is not None:
+            img = Image.open(f"letters/{sign}.png")
+        else:
+            img = Image.open(f"letters/NoSign.png")
+
         img = img.convert("RGB")
         qimg = QImage(img.tobytes(), img.width, img.height, QImage.Format_RGB888)
 
