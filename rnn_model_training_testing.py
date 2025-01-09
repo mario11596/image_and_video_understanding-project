@@ -11,12 +11,12 @@ import rnn_model
 
 num_classes = 33
 input_features = 63
-num_epochs = 500
+num_epochs = 200
 batch_size = 128
-shuffle = True
+shuffle = False
 training_validation_mode = False
 seed_num = 302
-learning_rate = 0.001
+learning_rate = 0.002
 
 classes = ('A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'minus',
             'N', 'O', 'P', 'period', 'Q', 'question mark', 'R', 'S', 'Space', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z')
@@ -40,6 +40,7 @@ def train_validation():
             optimizer.step()
 
             train_losses.append(loss.item())
+        scheduler.step()
         train_avg_losses.append(np.mean(train_losses))
 
         model.eval()
@@ -61,12 +62,12 @@ def train_validation():
         val_avg_losses.append( np.mean(val_loss) )
         avg_correct = correct / total
 
-        print(f'\nAverage loss in epoch {epoch + 1}/{num_epochs}: Train {train_avg_losses[-1]}, Validation {val_avg_losses[-1]}, '
+        print(f'\nAverage loss in epoch {epoch + 1}/{num_epochs} with LR {scheduler.get_last_lr()[0]:.4f}: Train {train_avg_losses[-1]}, Validation {val_avg_losses[-1]}, '
               f'Accuracy: {100. * avg_correct:.3f}%')
     return train_avg_losses, val_avg_losses
 
 
-# Traning and validation plot with lines
+# Training and validation plot with lines
 def training_and_validation_plot(train_loss_plot, val_loss_plot):
     plt.figure(figsize=(12, 6))
     plt.plot(train_loss_plot, label='Training Loss')
@@ -145,6 +146,10 @@ model = rnn_model.ResidualNeuralNetworkModel().to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+scheduler = torch.optim.lr_scheduler.LambdaLR(
+    optimizer,
+    lr_lambda=lambda epoch: 0.003 / 0.002 if epoch < 100 else 1.0
+)
 
 # Training/validation parts
 if training_validation_mode:
