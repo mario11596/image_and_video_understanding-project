@@ -354,12 +354,12 @@ def test_model_with_threshold(test_features, test_labels, input_shape=(9, 14), b
 if __name__ == "__main__":
     set_seed(seed)
 
-    train_features = r".\dataset\train_data_200.npy"
-    train_labels = r".\dataset\train_labels_200.npy"
-    val_features = r".\dataset\validation_data_200.npy"
-    val_labels = r".\dataset\validation_labels_200.npy"
-    test_features = r".\dataset\test_data_200.npy"
-    test_labels = r".\dataset\test_labels_200.npy"
+    train_features = r".\dataset\train_data.npy"
+    train_labels = r".\dataset\train_labels.npy"
+    val_features = r".\dataset\validation_data.npy"
+    val_labels = r".\dataset\validation_labels.npy"
+    test_features = r".\dataset\test_data.npy"
+    test_labels = r".\dataset\test_labelsS.npy"
 
     # Train the model
     # trained_model = train_model_main(train_features, train_labels, val_features, val_labels, num_classes, (9, 14), 
