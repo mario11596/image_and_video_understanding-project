@@ -25,8 +25,13 @@ timmer_new_prediction = 2000
 class SignLanguageRecognition(QWidget):
     def __init__(self):
         super().__init__()
-
         self.main_layout = QVBoxLayout()
+
+        self.title_label = QLabel("🖖🤞✌️ Sign Recognizer")
+        title_font = QFont("Helvetica", 20)
+        self.title_label.setFont(title_font)
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.main_layout.addWidget(self.title_label)
         self.top_layout = QHBoxLayout()
 
         self.splitter = QSplitter(Qt.Horizontal)
