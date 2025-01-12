@@ -26,7 +26,7 @@ def flip_images(main_folder):
     except Exception as e:
         print(f"An error occurred: {e}")
 
-main_folder_path = r'.\custom_dataset1'
+main_folder_path = r'.\custom_dataset'
 
 if __name__ == "__main__":
     flip_images(main_folder_path)
