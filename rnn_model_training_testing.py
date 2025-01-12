@@ -4,7 +4,7 @@ import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, precision_score, recall_score
 import seaborn as sns
 import rnn_model
 
@@ -107,6 +107,12 @@ def eval_classifier():
 
     accuracy = (correct / total) * 100
     print(f"Test Accuracy: {accuracy:.2f}%")
+
+    precision_macro = precision_score(all_labels, all_predicted, average='macro')
+    print(f"Test Precision: {precision_macro}")
+
+    recall_macro = recall_score(all_labels, all_predicted, average='macro')
+    print(f"Test Recall: {recall_macro}")
 
     cm = confusion_matrix(all_labels, all_predicted)
     plt.figure(figsize=(16, 16))
