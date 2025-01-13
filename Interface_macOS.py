@@ -21,6 +21,7 @@ class_mapping = ['A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation\nmark', '
                 'minus', 'N', 'O', 'P', 'period', 'Q', 'question\nmark', 'R', 'S', 'space', 'T', 'U', 'V', 'W', 'X',
                 'Y', 'Z']
 
+# Every 0.5 seconds model should give new prediction
 update_sign_detection_sec = 0.5
 
 model = rnn_model.ResidualNeuralNetworkModel().to(device)
@@ -35,13 +36,14 @@ customtkinter.set_appearance_mode("dark")
 customtkinter.set_default_color_theme("dark-blue")
 
 root = customtkinter.CTk()
-root.geometry("1400x900")
+root.attributes("-fullscreen", True)
 root.title("Webcam Viewer and Label Display")
 
 # Store width of window for resizing
 last_width = root.winfo_width()
 
-def switch_model():
+# Used for Testing
+'''def switch_model():
     global model
     global state_dict
     if change_model_button.cget("text") == "Use old Model":
@@ -62,12 +64,13 @@ def switch_model():
         change_model_button.configure(text="Use old Model")
         customtkinter.set_appearance_mode("dark")
         customtkinter.set_default_color_theme("dark-blue")
+'''
 
 def open_image_window():
     img1_path = "letters/SignsAlphabeth.png"
     img2_path = "letters/SignsSpecial.png"
 
-    if os.name == 'nt':  #Windows
+    if os.name == 'nt':  # Windows
         os.startfile(img1_path)
         os.startfile(img2_path)
     elif os.name == 'posix':  # For macOS and Linux
@@ -195,14 +198,16 @@ top_frame.pack(pady=10, padx=10, fill="x")
 title_label = customtkinter.CTkLabel(master=top_frame, text="🖖🤞✌️ Sign Recognizer", font=("Helvetica", 40))
 title_label.pack(side="left", pady=10, padx=20)
 
-subtitle_label = customtkinter.CTkLabel(master=top_frame, text="You are using the new model", font=("Helvetica", 15))
-subtitle_label.pack(side="left", pady=10, padx=20)
+#Used for testing
+#subtitle_label = customtkinter.CTkLabel(master=top_frame, text="You are using the new model", font=("Helvetica", 15))
+#subtitle_label.pack(side="left", pady=10, padx=20)
 
 open_images_button = customtkinter.CTkButton(master=top_frame, text="Show possible Signs", command=open_image_window, fg_color="#738678", hover_color="#505e54")
 open_images_button.pack(side="right", padx=20)
 
-change_model_button = customtkinter.CTkButton(master=top_frame, text="Use old Model", command=switch_model, fg_color="#738678", hover_color="#505e54")
-change_model_button.pack(side="right", padx=20)
+#Used for testing
+#change_model_button = customtkinter.CTkButton(master=top_frame, text="Use old Model", command=switch_model, fg_color="#738678", hover_color="#505e54")
+#change_model_button.pack(side="right", padx=20)
 
 middle_frame = customtkinter.CTkFrame(master=root)
 middle_frame.pack(pady=10, padx=10, fill="both", expand=True)
@@ -230,7 +235,7 @@ text_history.pack(side="left", pady=10, padx=10, fill="x", expand=True)
 clear_button = customtkinter.CTkButton(master=bottom_frame, text="Clear Text", command=clear_text, fg_color="#738678", hover_color="#505e54")
 clear_button.pack(side="right", padx=20)
 
-#Start webcam
+# Start webcam
 update_webcam()
 
 icon_image = PhotoImage(file="letters/icon.png")

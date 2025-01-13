@@ -7,6 +7,8 @@ import torch
 from PIL import Image
 from featureDetection.live_detection import process_video_frame
 import rnn_model
+import os
+import subprocess
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model_path = "sign_language_rnn_model.pth"
@@ -33,6 +35,13 @@ class SignLanguageRecognition(QWidget):
         self.title_label.setAlignment(Qt.AlignCenter)
         self.main_layout.addWidget(self.title_label)
         self.top_layout = QHBoxLayout()
+
+        self.open_images_button = QPushButton("Show Possible Signs")
+        self.open_images_button.setStyleSheet(
+            "background-color: #738678; color: white; font-size: 14px; border-radius: 5px; padding: 5px;"
+        )
+        self.open_images_button.clicked.connect(self.open_image_window)  # Connect to the function
+        self.main_layout.addWidget(self.open_images_button, alignment=Qt.AlignRight)
 
         self.splitter = QSplitter(Qt.Horizontal)
 
@@ -182,7 +191,20 @@ class SignLanguageRecognition(QWidget):
 
         return qimg
 
+    def open_image_window(self):
+        img1_path = "letters/SignsAlphabeth.png"
+        img2_path = "letters/SignsSpecial.png"
+
+        if os.name == 'nt':  # Windows
+            os.startfile(img1_path)
+            os.startfile(img2_path)
+        elif os.name == 'posix':  # For macOS and Linux
+            subprocess.run(["open", img1_path])  # macOS
+            subprocess.run(["open", img2_path])  # macOS
+            # For Linux, use subprocess.run(["xdg-open", img1_path]) if necessary
+
 app = QApplication([])
+
 window = SignLanguageRecognition()
 window.show()
 app.exec()

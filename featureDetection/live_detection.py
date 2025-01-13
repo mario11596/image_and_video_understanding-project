@@ -66,9 +66,9 @@ def process_hand_landmarker_result(output):
                 [landmark.z for landmark in hand_landmarks]
             )
 
-            if hand_index == 1:  #Left
+            if hand_index == 1:  # Left
                 hand_landmarks_detection = flattened_landmarks
-            elif hand_index == 0:  #Right
+            elif hand_index == 0:  # Right
                 hand_landmarks_detection = flattened_landmarks
 
     return {
@@ -90,4 +90,4 @@ def process_video_frame(frame):
         features = np.array(combined_landmarks, dtype=np.float32)
         return frame, features
 
-    return frame, [] #nothing detected
+    return frame, [] # Nothing detected
