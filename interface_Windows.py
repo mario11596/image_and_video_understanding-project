@@ -192,8 +192,8 @@ class SignLanguageRecognition(QWidget):
         return qimg
 
     def open_image_window(self):
-        img1_path = "letters/SignsAlphabeth.png"
-        img2_path = "letters/SignsSpecial.png"
+        img1_path = ".\letters\SignsAlphabeth.png"
+        img2_path = ".\letters\SignsSpecial.png"
 
         if os.name == 'nt':  # Windows
             os.startfile(img1_path)
