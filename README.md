@@ -21,7 +21,7 @@ Run the script featureExtractionImage.py in folder featureDetection to create ha
 ## CNN Model
 
 ## Residual Neural Network Model
-To run RNN model, you have to run the script rnn_model_training_testing.py. To do training, you have to setup training_validation_mode variable on True, while for testing you need to setup up on False. It will automatically load training and validation dataset using .npy files. If you do not want to do training, you can use our last pretrained model sign_language_rnn_model.pth which is available in this repository. The model has a accuracy of 99.19%
+To run RNN model, you have to run the script rnn_model_training_testing.py. To do training, you have to setup training_validation_mode variable on True, while for testing you need to setup up on False. It will automatically load training and validation dataset using .npy files. If you do not want to do training, you can use our last pretrained model sign_language_rnn_model.pth which is available in this repository. The model accuracy 98.89%, precision 0.98954, recall 0.98899 and F1 score 0.98914.
 
 ## Interface
 There are two types of interfaces. One is for Windows and Linux (interface_Windows.py), while the second is for macOS (interface_macOS.py).  The interface consists of three parts. The first is the live video streaming. The second is the image of the sign which model predictes, and the last one is the text box where each sign is showed in the form of text. Moreover, we add the button, so that user can delete current text from the text box. To stop using the interface, just close the window or stop the program.

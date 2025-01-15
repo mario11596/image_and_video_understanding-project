@@ -9,7 +9,7 @@ def create_custom_dataset():
                    'X', 'Y', 'Z']
 
     # path for custom repository
-    DATA_DIR = './custom_dataset1'
+    DATA_DIR = './custom_dataset'
     if not os.path.exists(DATA_DIR):
         os.makedirs(DATA_DIR)
 
