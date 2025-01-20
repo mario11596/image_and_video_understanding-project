@@ -111,7 +111,7 @@ class SignLanguageRecognition(QWidget):
     def load_model(self):
         model = rnn_model.ResidualNeuralNetworkModel().to(device)
 
-        state_dict = torch.load(model_path, map_location=device)
+        state_dict = torch.load(model_path, map_location=device, weights_only=True)
         model.load_state_dict(state_dict)
         model.eval()
 
