@@ -1,3 +1,15 @@
+#Known Issues - Warnings
+# - Using NORM_RECT without IMAGE_DIMENSIONS is only supported for the square ROI. Provide IMAGE_DIMENSIONS or use PROJECTION_MATRIX.
+#   https://github.com/google-ai-edge/mediapipe/issues/5639 (known issue from Mediapipe)
+# - +[IMKClient subclass]: chose IMkClient_Modern, +[IMKInputSession subclass]: chose IMKInputSession_Modern
+#   https://discussions.apple.com/thread/255761734?sortBy=rank
+# - Feedback manager requires a model with a single signature inference. Disabling support for feedback tensors.
+#   https://github.com/google-ai-edge/mediapipe/issues/5462
+#   Solution: downgrade mediapipe to version 0.10.9 with pip install mediapipe==0.10.9
+# - WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+#  https://discuss.ai.google.dev/t/warning-all-log-messages-before-absl-initializelog-is-called-are-written-to-stderr-e0000-001731955515-629532-17124-init-cc-229-grpc-wait-for-shutdown-with-timeout-timed-out/50020
+#  Solution: downgrade to grpcio==1.67.1
+
 import customtkinter
 import cv2
 from PIL import Image, ImageTk
