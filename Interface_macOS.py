@@ -37,7 +37,7 @@ class_mapping = ['A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation\nmark', '
 update_sign_detection_sec = 0.5
 
 model = rnn_model.ResidualNeuralNetworkModel().to(device)
-state_dict = torch.load(model_path, map_location=device)
+state_dict = torch.load(model_path, map_location=device, weights_only=True)
 model.load_state_dict(state_dict)
 model.eval()
 
@@ -60,7 +60,7 @@ last_width = root.winfo_width()
     global state_dict
     if change_model_button.cget("text") == "Use old Model":
         model = rnn_model_old.ResidualNeuralNetworkModel().to(device)
-        state_dict = torch.load(model_path_old, map_location=device)
+        state_dict = torch.load(model_path_old, map_location=device, weights_only=True)
         model.load_state_dict(state_dict)
         model.eval()
         subtitle_label.configure(text="You are using the old model")
@@ -69,7 +69,7 @@ last_width = root.winfo_width()
         customtkinter.set_default_color_theme("blue")
     else:
         model = rnn_model.ResidualNeuralNetworkModel().to(device)
-        state_dict = torch.load(model_path, map_location=device)
+        state_dict = torch.load(model_path, map_location=device, weights_only=True)
         model.load_state_dict(state_dict)
         model.eval()
         subtitle_label.configure(text="You are using the new model")
