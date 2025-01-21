@@ -7,6 +7,7 @@ from mediapipe.tasks.python.vision import HandLandmarker, HandLandmarkerOptions
 from mediapipe.tasks.python import vision
 
 
+#Read in all images from a specific folder
 def read_images_from_folders(base_folder):
     for root, _, files in os.walk(base_folder):
         folder_name = os.path.basename(root)
@@ -16,9 +17,10 @@ def read_images_from_folders(base_folder):
 
 
 def process_hand_landmarker_result(output, label):
-    # Extract left and right hand landmarks as flattened arrays
-    hand_landmarks_detection = [0.0] * 63
+    #Extract left and right hand landmarks as flattened arrays
+    hand_landmarks_detection = [0.0] * 63 #*63 because 21 features per hand times x,y,z value
 
+    #for each detected hand retrieve marker x,y,z values
     for i, handedness in enumerate(output.handedness):
         hand_landmarks = output.hand_landmarks[i]
         flattened_landmarks = [
@@ -29,10 +31,7 @@ def process_hand_landmarker_result(output, label):
                                   landmark.z for landmark in hand_landmarks
                               ]
 
-        if handedness[0].category_name == "Left":
-            hand_landmarks_detection = flattened_landmarks
-        elif handedness[0].category_name == "Right":
-            hand_landmarks_detection = flattened_landmarks
+        hand_landmarks_detection = flattened_landmarks #save landmarks (features)
 
     return {
         "label": label,
@@ -41,9 +40,9 @@ def process_hand_landmarker_result(output, label):
 
 
 if __name__ == '__main__':
-    base_folder = '../dataset/'
-    model_path = 'hand_landmarker.task'
-    splits = ["train", "validation", "test"]
+    base_folder = '../dataset/' #TODO: change path, if your images are stored somewhere else
+    model_path = 'hand_landmarker.task' #Mediapipe model
+    splits = ["train", "validation", "test"] #Different folders
 
     mp_hands = mp.solutions.hands
     base_options = BaseOptions(model_asset_path=model_path)
@@ -52,6 +51,7 @@ if __name__ == '__main__':
         base_options=base_options,
         running_mode=vision.RunningMode.IMAGE)
 
+    #Loop through all folders (test, train, validation) and extract features from images
     with HandLandmarker.create_from_options(options) as landmarker:
         for split in splits:
             print(f"Processing {split} split...")
@@ -68,9 +68,9 @@ if __name__ == '__main__':
 
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=numpy_image)
 
-                result = landmarker.detect(mp_image)
+                result = landmarker.detect(mp_image) #Let mediapipe detect features
 
-                processed_data = process_hand_landmarker_result(result, folder_label)
+                processed_data = process_hand_landmarker_result(result, folder_label) #store result and labels
                 combined_landmarks = processed_data["hand_landmarks_detection"]
 
                 features.append(combined_landmarks)
@@ -80,5 +80,6 @@ if __name__ == '__main__':
             features = np.array(features, dtype=np.float32)
             labels = np.array(labels, dtype=np.int32)
 
+            #Store all features in .npy files to be used for model
             np.save(f"{split}_data.npy", features)
             np.save(f"{split}_labels.npy", labels)

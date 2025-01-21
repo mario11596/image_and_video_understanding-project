@@ -20,12 +20,11 @@ from tkinter import PhotoImage
 import torch
 
 import rnn_model
-import rnn_model_old
 import time
 from featureDetection.live_detection import process_video_frame
 os.environ["PYTHONWARNINGS"] = "ignore"
 
-# Set up model
+#set up model
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model_path = "sign_language_rnn_model.pth"
 model_path_old = "sign_language_rnn_model_old.pth"
@@ -33,9 +32,9 @@ class_mapping = ['A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation\nmark', '
                 'minus', 'N', 'O', 'P', 'period', 'Q', 'question\nmark', 'R', 'S', 'space', 'T', 'U', 'V', 'W', 'X',
                 'Y', 'Z']
 
-# Every 0.5 seconds model should give new prediction
-update_sign_detection_sec = 0.5
-
+#every 0.5 seconds model should give new prediction
+update_sign_detection_sec = 0.5 #can be adapted but we found this to be a reasonable number
+#retrieve pretrained model
 model = rnn_model.ResidualNeuralNetworkModel().to(device)
 state_dict = torch.load(model_path, map_location=device, weights_only=True)
 model.load_state_dict(state_dict)
@@ -51,10 +50,10 @@ root = customtkinter.CTk()
 root.attributes("-fullscreen", True)
 root.title("Webcam Viewer and Label Display")
 
-# Store width of window for resizing
+#store width of window for resizing
 last_width = root.winfo_width()
 
-# Used for Testing
+#used for testing to switch between pre-trained models to compare the results
 '''def switch_model():
     global model
     global state_dict
@@ -81,14 +80,13 @@ last_width = root.winfo_width()
 def open_image_window():
     img1_path = "letters/SignsAlphabeth.png"
     img2_path = "letters/SignsSpecial.png"
-
-    if os.name == 'nt':  # Windows
+    #open a new window to show possible characters
+    if os.name == 'nt':  #windows
         os.startfile(img1_path)
         os.startfile(img2_path)
-    elif os.name == 'posix':  # For macOS and Linux
-        subprocess.run(["open", img1_path])  # macOS
-        subprocess.run(["open", img2_path])  # macOS
-        # For Linux, use subprocess.run(["xdg-open", img1_path]) if necessary
+    elif os.name == 'posix':  #for macOS
+        subprocess.run(["open", img1_path])
+        subprocess.run(["open", img2_path])
 
 def clear_text():
     text_history.configure(text="")
@@ -96,9 +94,10 @@ def clear_text():
 def update_font_size(event=None):
     global last_width
 
-    # current width of the window
+    #current width of the window
     current_width = root.winfo_width()
 
+    #adapt font size depending on size of window
     if current_width != last_width:
         percent = 0.04
         if len(label_below1.cget("text")) > 1:
@@ -113,6 +112,7 @@ def update_font_size(event=None):
         last_width = current_width
 
 def set_history_text(sign, text):
+    #update text box with latest recognized signs (and delete if necessary)
     if len(text) >= 50:
         text = text[1:]
 
@@ -136,12 +136,14 @@ def set_history_text(sign, text):
         return text + sign
 
 def update_webcam():
+    #open up webcam or update if already open
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
         webcam_label.configure(text="Unable to access webcam.")
         return
 
     def recognize_sign(features):
+        #give features to model and retrieve character from extracted features
         feature_tensor = torch.tensor(features, dtype=torch.float32).unsqueeze(0).to(device)
 
         with torch.no_grad():
@@ -151,7 +153,7 @@ def update_webcam():
             class_index = predicted_class.item()
             certainty = round(probabilities[0, class_index].item() * 100, 0)
 
-            # Check if the index is valid in the class mapping
+            #check if index is valid in the class mapping
             if 0 <= class_index < len(class_mapping):
                 letter = class_mapping[class_index]
             else:
@@ -161,19 +163,20 @@ def update_webcam():
     def capture():
         global last_sign
         global last_percent
-        last_recognition_time = time.time()  #Init last recognition time
+        last_recognition_time = time.time()  #init last recognition time
         while True:
             ret, frame = cap.read()
+            #capture frame and proces features
             if ret:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 h, w, _ = frame.shape
                 aspect_ratio = w / h
 
-                # Resize frame to fit the label while maintaining aspect ratio
+                #resize frame to fit label while maintaining aspect ratio
                 current_width = int(root.winfo_width() * 0.8)
                 target_height = int(current_width / aspect_ratio)
 
-                # Get features out of the frame
+                #get features out of captured frame
                 frame = cv2.flip(frame, 1)
                 frame_to_show, features = process_video_frame(frame)
 
@@ -182,18 +185,19 @@ def update_webcam():
                 webcam_label.configure(image=img)
                 webcam_label.image = img
 
-                # Update Recognize Signs every update_sign_detection_sec seconds
+                #update Recognize Signs every update_sign_detection_sec seconds
                 if len(features) > 0 and time.time() - last_recognition_time >= update_sign_detection_sec:
                     sign, percent = recognize_sign(features)
                     if sign:
+                        #update labels
                         label_below1.configure(text=last_sign)
                         last_sign = sign
                         label_below2.configure(text=str(last_percent) + " %")
                         last_percent = percent
                         text_history.configure(text=set_history_text(last_sign, text_history.cget("text")))
 
-                    last_recognition_time = time.time()  # Update last recognition time
-                elif len(features) == 0:
+                    last_recognition_time = time.time()  #update last recognition time
+                elif len(features) == 0: #nothing was detected
                     label_below1.configure(text=last_sign)
                     last_sign = "Nothing\ndetected"
                     label_below2.configure(text=str(last_percent) + " %")
@@ -247,7 +251,7 @@ text_history.pack(side="left", pady=10, padx=10, fill="x", expand=True)
 clear_button = customtkinter.CTkButton(master=bottom_frame, text="Clear Text", command=clear_text, fg_color="#738678", hover_color="#505e54")
 clear_button.pack(side="right", padx=20)
 
-# Start webcam
+#start webcam
 update_webcam()
 
 icon_image = PhotoImage(file="letters/icon.png")

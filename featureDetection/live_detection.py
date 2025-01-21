@@ -21,20 +21,21 @@ current_landmarks = None
 def print_result(result: HandLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
     global current_landmarks
     if result.hand_landmarks:
-        current_landmarks = result.hand_landmarks
+        current_landmarks = result.hand_landmarks #set current_landmarks to detected hand
     else:
-        current_landmarks = None  # Clear current landmarks if no hands detected
+        current_landmarks = None  #if no hands detected set to none
 
 options = HandLandmarkerOptions(
         base_options=BaseOptions(model_asset_path=model_path),
-        running_mode=VisionRunningMode.LIVE_STREAM,
+        running_mode=VisionRunningMode.LIVE_STREAM, #Mode = Live stream since real time capturing of features
         result_callback=print_result,
-        num_hands=1
+        num_hands=1 #We only want to detect one hand
     )
 
-landmarker = HandLandmarker.create_from_options(options)
+landmarker = HandLandmarker.create_from_options(options) #Initialize media pipe hand marker detection
 
 def draw_landmarks_on_frame(frame, landmarks):
+    #Features on hand
     connections = [
         (0, 1), (1, 2), (2, 3), (3, 4),  # Thumb
         (0, 5), (5, 6), (6, 7), (7, 8),  # Index finger
@@ -43,6 +44,7 @@ def draw_landmarks_on_frame(frame, landmarks):
         (13, 17), (0, 17), (17, 18), (18, 19), (19, 20)  # Pinky finger
     ]
 
+    #visualize the features as connected circles on the live video
     for hand_landmarks in landmarks:
         points = []
         for landmark in hand_landmarks:
@@ -57,7 +59,7 @@ def draw_landmarks_on_frame(frame, landmarks):
 
 def process_hand_landmarker_result(output):
     hand_landmarks_detection = [0.0] * 63
-
+    #extract x,y,z value for each feature
     if output is not None:
         for hand_index, hand_landmarks in enumerate(output):
             flattened_landmarks = (
@@ -66,16 +68,14 @@ def process_hand_landmarker_result(output):
                 [landmark.z for landmark in hand_landmarks]
             )
 
-            if hand_index == 1:  # Left
-                hand_landmarks_detection = flattened_landmarks
-            elif hand_index == 0:  # Right
-                hand_landmarks_detection = flattened_landmarks
+            hand_landmarks_detection = flattened_landmarks
 
     return {
         "hand_landmarks_detection": np.array(hand_landmarks_detection, dtype=np.float32)
     }
 
 def process_video_frame(frame):
+    #read in video frame and compute features
     rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
 
@@ -90,4 +90,4 @@ def process_video_frame(frame):
         features = np.array(combined_landmarks, dtype=np.float32)
         return frame, features
 
-    return frame, [] # Nothing detected
+    return frame, [] #nothing was detected

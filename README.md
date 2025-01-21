@@ -13,12 +13,11 @@ pip install -r requirements.txt
 We suggest to you python version 3.11 since that the project is done in that version.
 
 ## Dataset
-The whole dataset is created by us. If you want to create your own dataset, you should run the script collect_dataset.py and define how many images you want per class. Run the script dataset_preparing.py. It will split the dataset on the three parts training, validation and test. It will be created the new folder dataset which is used in the other scripts.
+The whole dataset is created by us. If you want to create your own dataset, you should run the script collect_dataset.py and define how many images you want per class. Run the script dataset_preparing.py. It will split the dataset on the three parts training, validation and test. It will be created the new folder dataset which is used in the other scripts. 
+Our dataset can be downloaded here: https://cloud.tugraz.at/index.php/s/kXiNPM86rZQY4xi. Place the images in the ./dataset folder.
 
 ## MediaPipe
-Run the script featureExtractionImage.py in folder featureDetection to create hand landmarks for all three datasets. It will be created three .npy files.
-
-## CNN Model
+Run the script featureExtractionImage.py in folder featureDetection to create hand landmarks for all three datasets. Three .npy files will be created to use for model.
 
 ## Residual Neural Network Model
 To run RNN model, you have to run the script rnn_model_training_testing.py. To do training, you have to setup training_validation_mode variable on True, while for testing you need to setup up on False. It will automatically load training and validation dataset using .npy files. If you do not want to do training, you can use our last pretrained model sign_language_rnn_model.pth which is available in this repository. The model accuracy 98.89%, precision 0.98954, recall 0.98899 and F1 score 0.98914.
