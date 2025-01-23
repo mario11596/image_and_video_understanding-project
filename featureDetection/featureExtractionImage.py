@@ -7,7 +7,7 @@ from mediapipe.tasks.python.vision import HandLandmarker, HandLandmarkerOptions
 from mediapipe.tasks.python import vision
 
 
-#Read in all images from a specific folder
+#Read in all images from base_folder
 def read_images_from_folders(base_folder):
     for root, _, files in os.walk(base_folder):
         folder_name = os.path.basename(root)
@@ -31,6 +31,7 @@ def process_hand_landmarker_result(output, label):
                                   landmark.z for landmark in hand_landmarks
                               ]
 
+        #handedness = if right or left hand -> since we detect only one hand does not matter for us
         hand_landmarks_detection = flattened_landmarks #save landmarks (features)
 
     return {
@@ -45,11 +46,12 @@ if __name__ == '__main__':
     splits = ["train", "validation", "test"] #Different folders
 
     mp_hands = mp.solutions.hands
-    base_options = BaseOptions(model_asset_path=model_path)
+    base_options = BaseOptions(model_asset_path=model_path) #Options for Mediapipe
 
     options = HandLandmarkerOptions(
         base_options=base_options,
-        running_mode=vision.RunningMode.IMAGE)
+        running_mode=vision.RunningMode.IMAGE) #Use running mode IMAGE, since we want to extract features from images
+        #not live video
 
     #Loop through all folders (test, train, validation) and extract features from images
     with HandLandmarker.create_from_options(options) as landmarker:
@@ -62,7 +64,7 @@ if __name__ == '__main__':
             labels = []
 
             for image_path, folder_label in read_images_from_folders(split_path):
-                print(folder_label)
+                #print(folder_label)
                 pil_image = Image.open(image_path)
                 numpy_image = np.array(pil_image)
 

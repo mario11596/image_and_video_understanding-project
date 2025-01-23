@@ -26,8 +26,10 @@ os.environ["PYTHONWARNINGS"] = "ignore"
 
 #set up model
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model_path = "sign_language_rnn_model.pth"
-model_path_old = "sign_language_rnn_model_old.pth"
+#Your pretrained model
+#Replace this .pth file with the model you want to use
+model_path = "pretrained_rnn_model.pth"
+#model_path_old = "sign_language_rnn_model_old.pth" -> used for testing old model
 class_mapping = ['A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation\nmark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
                 'minus', 'N', 'O', 'P', 'period', 'Q', 'question\nmark', 'R', 'S', 'space', 'T', 'U', 'V', 'W', 'X',
                 'Y', 'Z']

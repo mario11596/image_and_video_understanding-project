@@ -3,20 +3,20 @@ import mediapipe as mp
 import numpy as np
 from mediapipe.framework.formats import landmark_pb2
 
-MARGIN = 10
-
+#Mediapipe setup
 mp_hands = mp.solutions.hands
 mp_drawing = mp.solutions.drawing_utils
 
-model_path = 'featureDetection/hand_landmarker.task'
+model_path = 'featureDetection/hand_landmarker.task' #Mediapipe model
 
+#Options/Settings used for Mediapipe
 BaseOptions = mp.tasks.BaseOptions
 HandLandmarker = mp.tasks.vision.HandLandmarker
 HandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions
 HandLandmarkerResult = mp.tasks.vision.HandLandmarkerResult
 VisionRunningMode = mp.tasks.vision.RunningMode
 
-current_landmarks = None
+current_landmarks = None #Currently detected features
 
 def print_result(result: HandLandmarkerResult, output_image: mp.Image, timestamp_ms: int):
     global current_landmarks
@@ -51,11 +51,11 @@ def draw_landmarks_on_frame(frame, landmarks):
             x = int(landmark.x * frame.shape[1])
             y = int(landmark.y * frame.shape[0])
             points.append((x, y))
-            cv2.circle(frame, (x, y), 8, (245,216,90), -1)
+            cv2.circle(frame, (x, y), 8, (245,216,90), -1) #visualize features as circles
 
         for start_idx, end_idx in connections:
             if start_idx < len(points) and end_idx < len(points):
-                cv2.line(frame, points[start_idx], points[end_idx], (115,134,120), 3)
+                cv2.line(frame, points[start_idx], points[end_idx], (115,134,120), 3) #connect features
 
 def process_hand_landmarker_result(output):
     hand_landmarks_detection = [0.0] * 63

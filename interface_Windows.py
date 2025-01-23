@@ -23,7 +23,9 @@ import os
 import subprocess
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model_path = "sign_language_rnn_model.pth"
+#Your pretrained model
+#Replace this .pth file with the model you want to use
+model_path = "pretrained_rnn_model.pth"
 class_mapping = [
                 'A', 'B', 'C', 'comma', 'D', 'del', 'E', 'exclamation mark', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
                 'minus', 'N', 'O', 'P', 'period', 'Q', 'question mark', 'R', 'S', 'Space', 'T', 'U', 'V', 'W', 'X',

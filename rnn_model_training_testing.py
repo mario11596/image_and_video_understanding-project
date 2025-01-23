@@ -180,11 +180,14 @@ if training_validation_mode:
     train_loss, val_loss = train_validation()
     training_and_validation_plot(train_loss, val_loss)
 
-    torch.save(model.state_dict(), "sign_language_rnn_model.pth")
+    #TODO: Chose a name for your model !!
+    torch.save(model.state_dict(), "your_model_name.pth")
 
 # Testing parts
 else:
-    model.load_state_dict(torch.load("sign_language_rnn_model.pth"))
+    # Your pretrained model
+    # Replace this .pth file with the model you want to use
+    model.load_state_dict(torch.load("pretrained_rnn_model.pth"))
 
     test_data = np.load(test_directory)
     test_labels = np.load(test_labels_directory)
